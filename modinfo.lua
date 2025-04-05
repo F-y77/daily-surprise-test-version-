@@ -1,7 +1,7 @@
-name = "每日惊喜（测试版）"
-description = "每天给玩家一个随机的惊喜效果（请注意备份存档，BUG很多。）"
+name = "三百喜"
+description = "每天给玩家一个随机的惊喜效果，一共有三百种效果，可能有些无法正常使用。"
 author = "凌(Va6gn)"
-version = "1.5" 
+version = "1.6" 
 
 -- 游戏兼容性                               
 dst_compatible = true
@@ -83,7 +83,7 @@ configuration_options = {
             {description = "90%", data = 0.9},
             {description = "100%", data = 1}
         },
-        default = 0.3
+        default = 0.5
     },
     {
         name = "log_level",
@@ -96,5 +96,5 @@ configuration_options = {
             {description = "无日志", data = 0}
         },
         default = 1
-    }
+    },
 }
