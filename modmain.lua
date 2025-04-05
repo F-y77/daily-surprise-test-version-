@@ -7197,9 +7197,1206 @@ local BUFF_LIST = {
             end
         end
     },
-}
-
--- DEBUFF效果列表定义 (负面效果)
+    {
+        id = "BUFF_141",
+        name = "瞬间移动",
+        description = "你可以标记位置并传送回去！",
+        fn = function(player)
+            local marked_pos = nil
+            local marker = nil
+            
+            -- 创建标记功能
+            local function mark_position()
+                local x, y, z = player.Transform:GetWorldPosition()
+                marked_pos = {x=x, y=y, z=z}
+                
+                -- 移除旧标记
+                if marker and marker:IsValid() then
+                    marker:Remove()
+                end
+                
+                -- 创建新标记
+                marker = SpawnPrefab("staff_castinglight")
+                if marker then
+                    marker.Transform:SetPosition(x, y, z)
+                    marker:DoTaskInTime(0.5, function()
+                        if marker and marker.AnimState then
+                            marker.AnimState:SetMultColour(0.8, 0.5, 1.0, 1)
+                        end
+                    end)
+                end
+                
+                if player.components.talker then
+                    player.components.talker:Say("我标记了这个位置！")
+                end
+            end
+            
+            -- 传送功能
+            local function teleport_to_mark()
+                if marked_pos then
+                    -- 创建传送效果
+                    local fx1 = SpawnPrefab("spawn_fx_medium")
+                    if fx1 then
+                        local x, y, z = player.Transform:GetWorldPosition()
+                        fx1.Transform:SetPosition(x, y, z)
+                    end
+                    
+                    -- 执行传送
+                    player.Physics:Teleport(marked_pos.x, marked_pos.y, marked_pos.z)
+                    
+                    -- 到达效果
+                    local fx2 = SpawnPrefab("spawn_fx_medium")
+                    if fx2 then
+                        fx2.Transform:SetPosition(marked_pos.x, marked_pos.y, marked_pos.z)
+                    end
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("传送成功！")
+                    end
+                else
+                    if player.components.talker then
+                        player.components.talker:Say("我还没有标记位置！")
+                    end
+                end
+            end
+            
+            -- 注册按键监听
+            TheInput:AddKeyHandler(function(key, down)
+                if down then
+                    -- 按F键标记位置
+                    if key == KEY_F then
+                        mark_position()
+                    -- 按R键传送到标记位置
+                    elseif key == KEY_R then
+                        teleport_to_mark()
+                    end
+                end
+                return false
+            end)
+            
+            return function()
+                if marker and marker:IsValid() then
+                    marker:Remove()
+                end
+                
+                -- 移除按键监听（这里是模拟，实际需要保存handler并移除）
+                -- TheInput:RemoveKeyHandler(key_handler)
+                
+                DebugLog(3, "清理瞬间移动效果")
+            end
+        end
+    },
+    {
+        id = "BUFF_142",
+        name = "宠物召唤师",
+        description = "你可以召唤小动物跟随你！",
+        fn = function(player)
+            local pets = {}
+            local max_pets = 3
+            local pet_types = {"rabbit", "robin", "butterfly", "perdling", "grassgekko", "kitcoon"}
+            
+            -- 召唤宠物功能
+            local function summon_pet()
+                if #pets >= max_pets then
+                    if player.components.talker then
+                        player.components.talker:Say("我已经有太多宠物了！")
+                    end
+                    return
+                end
+                
+                local pet_type = pet_types[math.random(#pet_types)]
+                local pet = SpawnPrefab(pet_type)
+                
+                if pet then
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    local angle = math.random() * 2 * math.pi
+                    local radius = 2
+                    
+                    pet.Transform:SetPosition(x + radius * math.cos(angle), 0, z + radius * math.sin(angle))
+                    
+                    -- 设置宠物行为
+                    if pet.components.follower then
+                        pet.components.follower:SetLeader(player)
+                    end
+                    
+                    -- 设置宠物友好
+                    if pet.components.combat then
+                        pet.components.combat:SetDefaultDamage(15) -- 提高伤害
+                    end
+                    
+                    -- 添加特殊效果
+                    local fx = SpawnPrefab("lavaarena_creature_teleport_small_fx")
+                    if fx then
+                        fx.entity:SetParent(pet.entity)
+                        fx:DoTaskInTime(1, function() 
+                            if fx:IsValid() then fx:Remove() end 
+                        end)
+                    end
+                    
+                    pet:AddTag("summoned_pet")
+                    table.insert(pets, pet)
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("来吧，小家伙！")
+                    end
+                    
+                    -- 设置宠物寿命
+                    pet:DoTaskInTime(300, function() -- 5分钟后消失
+                        if pet:IsValid() then
+                            local pfx = SpawnPrefab("spawn_fx_small")
+                            if pfx then
+                                local px, py, pz = pet.Transform:GetWorldPosition()
+                                pfx.Transform:SetPosition(px, py, pz)
+                            end
+                            
+                            for i, p in ipairs(pets) do
+                                if p == pet then
+                                    table.remove(pets, i)
+                                    break
+                                end
+                            end
+                            
+                            pet:Remove()
+                        end
+                    end)
+                end
+            end
+            
+            -- 定期随机召唤
+            local task = player:DoPeriodicTask(60, function() -- 每60秒尝试召唤
+                if math.random() < 0.5 and #pets < max_pets then -- 50%几率
+                    summon_pet()
+                end
+            end)
+            
+            -- 首次立即召唤一个
+            summon_pet()
+            
+            return function()
+                if task then
+                    task:Cancel()
+                end
+                
+                -- 移除所有召唤的宠物
+                for _, pet in ipairs(pets) do
+                    if pet:IsValid() then
+                        local fx = SpawnPrefab("spawn_fx_small")
+                        if fx then
+                            local x, y, z = pet.Transform:GetWorldPosition()
+                            fx.Transform:SetPosition(x, y, z)
+                        end
+                        pet:Remove()
+                    end
+                end
+                
+                DebugLog(3, "清理宠物召唤师效果")
+            end
+        end
+    },
+    {
+        id = "BUFF_143",
+        name = "腐化掌控",
+        description = "你可以利用腐烂物制造毒素攻击！",
+        fn = function(player)
+            -- 添加毒素伤害到武器
+            if player.components.combat then
+                local old_calc_damage = player.components.combat.CalcDamage
+                player.components.combat.CalcDamage = function(self, target, weapon, multiplier)
+                    local damage = old_calc_damage(self, target, weapon, multiplier)
+                    
+                    -- 对生物造成额外毒素伤害
+                    if target:HasTag("monster") or target:HasTag("animal") or target:HasTag("insect") then
+                        -- 创建毒素效果
+                        local fx = SpawnPrefab("poison_cloud")
+                        if fx then
+                            local x, y, z = target.Transform:GetWorldPosition()
+                            fx.Transform:SetPosition(x, y, z)
+                        end
+                        
+                        -- 让目标中毒
+                        if target.components.health and not target.components.health:IsDead() then
+                            target:DoTaskInTime(1, function()
+                                if target:IsValid() and target.components.health then
+                                    target.components.health:DoDelta(-5)
+                                end
+                            end)
+                            
+                            target:DoTaskInTime(3, function()
+                                if target:IsValid() and target.components.health then
+                                    target.components.health:DoDelta(-5)
+                                end
+                            end)
+                        end
+                        
+                        return damage * 1.2 -- 额外20%伤害
+                    end
+                    
+                    return damage
+                end
+            end
+            
+            -- 腐烂物光环
+            local aura = player:DoPeriodicTask(0.5, function()
+                local x, y, z = player.Transform:GetWorldPosition()
+                
+                -- 随机生成毒气效果
+                if math.random() < 0.1 then
+                    local angle = math.random() * 2 * math.pi
+                    local radius = math.random() * 3
+                    
+                    local fx = SpawnPrefab("poison_cloud")
+                    if fx then
+                        fx.Transform:SetPosition(x + radius * math.cos(angle), y, z + radius * math.sin(angle))
+                        fx:DoTaskInTime(2, function() 
+                            if fx:IsValid() then fx:Remove() end 
+                        end)
+                    end
+                end
+                
+                -- 检查附近敌人
+                local targets = TheSim:FindEntities(x, y, z, 6, {"_combat"}, {"player", "companion", "INLIMBO"})
+                for _, target in ipairs(targets) do
+                    if target.components.health and math.random() < 0.2 then
+                        -- 造成腐化伤害
+                        target.components.health:DoDelta(-1)
+                        
+                        -- 减缓敌人速度
+                        if target.components.locomotor then
+                            target.components.locomotor:SetExternalSpeedMultiplier(target, "poison_effect", 0.8)
+                            
+                            target:DoTaskInTime(2, function()
+                                if target:IsValid() and target.components.locomotor then
+                                    target.components.locomotor:RemoveExternalSpeedMultiplier(target, "poison_effect")
+                                end
+                            end)
+                        end
+                    end
+                end
+            end)
+            
+            -- 玩家免疫毒素
+            player:AddTag("poisonimmune")
+            
+            return function()
+                if player.components.combat then
+                    player.components.combat.CalcDamage = old_calc_damage
+                end
+                
+                if aura then
+                    aura:Cancel()
+                end
+                
+                player:RemoveTag("poisonimmune")
+                
+                DebugLog(3, "清理腐化掌控效果")
+            end
+        end
+    },
+    {
+        id = "BUFF_144",
+        name = "虫群支配",
+        description = "你可以控制昆虫为你战斗！",
+        fn = function(player)
+            local controlled_insects = {}
+            local max_insects = 5
+            
+            -- 玩家不会被昆虫攻击
+            player:AddTag("insectfriend")
+            
+            -- 控制昆虫函数
+            local function attempt_control(insect)
+                if #controlled_insects >= max_insects then return false end
+                
+                if insect:HasTag("insect") or insect.prefab == "spider" or insect.prefab == "beehive" then
+                    -- 标记为已控制
+                    insect:AddTag("controlled_insect")
+                    
+                    -- 改变颜色
+                    if insect.AnimState then
+                        insect.AnimState:SetMultColour(0.7, 1, 0.7, 1)
+                    end
+                    
+                    -- 设置为友好
+                    if insect.components.combat then
+                        local old_target = insect.components.combat.target
+                        
+                        -- 如果正在攻击玩家，停止攻击
+                        if old_target == player then
+                            insect.components.combat:SetTarget(nil)
+                        end
+                        
+                        -- 修改目标选择逻辑
+                        local old_retarget = insect.components.combat.RetargetFunction
+                        insect.components.combat.RetargetFunction = function(inst)
+                            local x, y, z = inst.Transform:GetWorldPosition()
+                            local targets = TheSim:FindEntities(x, y, z, 20, {"_combat"}, {"player", "controlled_insect", "insect", "INLIMBO"})
+                            
+                            for _, target in ipairs(targets) do
+                                if target ~= player and (target:HasTag("monster") or target:HasTag("animal")) then
+                                    return target
+                                end
+                            end
+                            
+                            return nil
+                        end
+                        
+                        -- 保存原始函数以便清理
+                        insect.old_retarget = old_retarget
+                    end
+                    
+                    -- 跟随玩家
+                    if insect.components.follower then
+                        insect.components.follower:SetLeader(player)
+                    end
+                    
+                    -- 增强昆虫
+                    if insect.components.health then
+                        insect.components.health:SetMaxHealth(insect.components.health.maxhealth * 1.5)
+                        insect.components.health:SetPercent(1)
+                    end
+                    
+                    if insect.components.combat then
+                        insect.components.combat.defaultdamage = insect.components.combat.defaultdamage * 1.5
+                    end
+                    
+                    -- 添加效果
+                    local fx = SpawnPrefab("lavaarena_creature_teleport_small_fx")
+                    if fx then
+                        fx.entity:SetParent(insect.entity)
+                        fx:DoTaskInTime(1, function() 
+                            if fx:IsValid() then fx:Remove() end 
+                        end)
+                    end
+                    
+                    -- 添加到控制列表
+                    table.insert(controlled_insects, insect)
+                    
+                    -- 一段时间后消失
+                    insect:DoTaskInTime(120, function()
+                        if insect:IsValid() then
+                            -- 移除控制标记
+                            insect:RemoveTag("controlled_insect")
+                            
+                            -- 恢复颜色
+                            if insect.AnimState then
+                                insect.AnimState:SetMultColour(1, 1, 1, 1)
+                            end
+                            
+                            -- 恢复战斗逻辑
+                            if insect.components.combat and insect.old_retarget then
+                                insect.components.combat.RetargetFunction = insect.old_retarget
+                                insect.old_retarget = nil
+                            end
+                            
+                            -- 移除跟随
+                            if insect.components.follower then
+                                insect.components.follower:SetLeader(nil)
+                            end
+                            
+                            -- 从列表移除
+                            for i, controlled in ipairs(controlled_insects) do
+                                if controlled == insect then
+                                    table.remove(controlled_insects, i)
+                                    break
+                                end
+                            end
+                        end
+                    end)
+                    
+                    return true
+                end
+                
+                return false
+            end
+            
+            -- 定期检查附近昆虫
+            local control_task = player:DoPeriodicTask(5, function()
+                if #controlled_insects >= max_insects then return end
+                
+                local x, y, z = player.Transform:GetWorldPosition()
+                local insects = TheSim:FindEntities(x, y, z, 10, nil, {"controlled_insect", "INLIMBO"}, {"insect", "spider"})
+                
+                for _, insect in ipairs(insects) do
+                    if attempt_control(insect) and player.components.talker then
+                        player.components.talker:Say("这个小家伙现在为我服务了！")
+                        break -- 每次只控制一个
+                    end
+                end
+            end)
+            
+            -- 定期生成蜜蜂
+            local spawn_task = player:DoPeriodicTask(30, function()
+                if #controlled_insects < max_insects and math.random() < 0.5 then
+                    local bee = SpawnPrefab("bee")
+                    if bee then
+                        local x, y, z = player.Transform:GetWorldPosition()
+                        local angle = math.random() * 2 * math.pi
+                        local radius = 2
+                        
+                        bee.Transform:SetPosition(x + radius * math.cos(angle), y, z + radius * math.sin(angle))
+                        
+                        attempt_control(bee)
+                    end
+                end
+            end)
+            
+            return function()
+                player:RemoveTag("insectfriend")
+                
+                if control_task then
+                    control_task:Cancel()
+                end
+                
+                if spawn_task then
+                    spawn_task:Cancel()
+                end
+                
+                -- 释放所有控制的昆虫
+                for _, insect in ipairs(controlled_insects) do
+                    if insect:IsValid() then
+                        -- 移除控制标记
+                        insect:RemoveTag("controlled_insect")
+                        
+                        -- 恢复颜色
+                        if insect.AnimState then
+                            insect.AnimState:SetMultColour(1, 1, 1, 1)
+                        end
+                        
+                        -- 恢复战斗逻辑
+                        if insect.components.combat and insect.old_retarget then
+                            insect.components.combat.RetargetFunction = insect.old_retarget
+                            insect.old_retarget = nil
+                        end
+                        
+                        -- 移除跟随
+                        if insect.components.follower then
+                            insect.components.follower:SetLeader(nil)
+                        end
+                    end
+                end
+                
+                DebugLog(3, "清理虫群支配效果")
+            end
+        end
+    },
+    {
+        id = "BUFF_145",
+        name = "食物能量",
+        description = "食物会给你提供额外的能量和效果！",
+        fn = function(player)
+            -- 监听进食事件
+            local function on_eat_food(inst, data)
+                if not data or not data.food then return end
+                
+                local food = data.food
+                
+                -- 创建能量效果
+                local fx = SpawnPrefab("lavaarena_creature_teleport_small_fx")
+                if fx then
+                    fx.entity:SetParent(player.entity)
+                    fx:DoTaskInTime(1, function() 
+                        if fx:IsValid() then fx:Remove() end 
+                    end)
+                end
+                
+                -- 根据食物类型提供不同效果
+                if food:HasTag("fruit") then
+                    -- 水果提供移动速度
+                    if player.components.locomotor then
+                        player.components.locomotor:SetExternalSpeedMultiplier(player, "fruit_boost", 1.3)
+                        
+                        player:DoTaskInTime(30, function()
+                            if player:IsValid() and player.components.locomotor then
+                                player.components.locomotor:RemoveExternalSpeedMultiplier(player, "fruit_boost")
+                            end
+                        end)
+                    end
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("好清爽的果子，我感觉更敏捷了！")
+                    end
+                elseif food:HasTag("veggie") then
+                    -- 蔬菜提供防御
+                    if player.components.health then
+                        local old_absorb = player.components.health.absorb or 0
+                        player.components.health.absorb = old_absorb + 0.3
+                        
+                        player:DoTaskInTime(30, function()
+                            if player:IsValid() and player.components.health then
+                                player.components.health.absorb = old_absorb
+                            end
+                        end)
+                    end
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("蔬菜的力量让我更坚韧了！")
+                    end
+                elseif food:HasTag("meat") then
+                    -- 肉类提供攻击力
+                    if player.components.combat then
+                        local old_damage_mult = player.components.combat.damagemultiplier or 1
+                        player.components.combat.damagemultiplier = old_damage_mult * 1.3
+                        
+                        player:DoTaskInTime(30, function()
+                            if player:IsValid() and player.components.combat then
+                                player.components.combat.damagemultiplier = old_damage_mult
+                            end
+                        end)
+                    end
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("肉类让我充满了力量！")
+                    end
+                elseif food.components.edible and food.components.edible.foodtype == FOODTYPE.GOODIES then
+                    -- 甜食提供理智恢复
+                    if player.components.sanity then
+                        player.components.sanity:DoDelta(20)
+                    end
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("甜食总能让人心情愉悦！")
+                    end
+                else
+                    -- 其他食物提供小幅全面增益
+                    if player.components.health then
+                        player.components.health:DoDelta(5)
+                    end
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("吃饱了才有力气！")
+                    end
+                end
+            end
+            
+            player:ListenForEvent("oneat", on_eat_food)
+            
+            -- 提高所有食物效果
+            local old_get_hunger = GLOBAL.GetHunger
+            GLOBAL.GetHunger = function(inst, item)
+                local hunger_val = old_get_hunger(inst, item)
+                if inst == player then
+                    return hunger_val * 1.5
+                end
+                return hunger_val
+            end
+            
+            local old_get_health = GLOBAL.GetHealth
+            GLOBAL.GetHealth = function(inst, item)
+                local health_val = old_get_health(inst, item)
+                if inst == player then
+                    return health_val * 1.5
+                end
+                return health_val
+            end
+            
+            local old_get_sanity = GLOBAL.GetSanity
+            GLOBAL.GetSanity = function(inst, item)
+                local sanity_val = old_get_sanity(inst, item)
+                if inst == player then
+                    return sanity_val * 1.5
+                end
+                return sanity_val
+            end
+            
+            return function()
+                player:RemoveEventCallback("oneat", on_eat_food)
+                
+                -- 恢复原始函数
+                GLOBAL.GetHunger = old_get_hunger
+                GLOBAL.GetHealth = old_get_health
+                GLOBAL.GetSanity = old_get_sanity
+                
+                DebugLog(3, "清理食物能量效果")
+            end
+        end
+    },
+    {
+        id = "BUFF_146",
+        name = "月光祝福",
+        description = "你受到月亮的祝福，获得特殊能力！",
+        fn = function(player)
+            -- 玩家夜晚发光
+            local light = nil
+            
+            -- 月相变化监听
+            local function on_phase_changed(inst, phase)
+                -- 根据月相调整效果强度
+                local power_mult = 1
+                
+                if phase == "new" then
+                    power_mult = 0.5 -- 新月效果弱
+                elseif phase == "full" then
+                    power_mult = 2 -- 满月效果强
+                elseif phase == "quarter" or phase == "threequarter" then
+                    power_mult = 1.5 -- 其他月相中等
+                end
+                
+                -- 更新光效
+                if light and light:IsValid() then
+                    light:Remove()
+                    light = nil
+                end
+                
+                if TheWorld.state.isnight then
+                    light = SpawnPrefab("minerhatlight")
+                    if light then
+                        light.entity:SetParent(player.entity)
+                        light.Transform:SetPosition(0, 0, 0)
+                        
+                        if light.Light then
+                            light.Light:SetRadius(3 * power_mult)
+                            light.Light:SetFalloff(0.7)
+                            light.Light:SetIntensity(0.6 * power_mult)
+                            light.Light:SetColour(0.6, 0.6, 1)
+                        end
+                    end
+                end
+                
+                -- 根据月相和时间更新能力
+                if player.components.combat then
+                    if TheWorld.state.isnewmoon then
+                        -- 新月增强隐身能力
+                        if TheWorld.state.isnight and player.AnimState then
+                            player.AnimState:SetMultColour(1, 1, 1, 0.7)
+                        else
+                            player.AnimState:SetMultColour(1, 1, 1, 1)
+                        end
+                    elseif TheWorld.state.isfullmoon then
+                        -- 满月增强战斗能力
+                        player.components.combat.damagemultiplier = 1.5
+                        
+                        -- 满月特效
+                        if TheWorld.state.isnight then
+                            local fx = SpawnPrefab("moonpulse_fx")
+                            if fx then
+                                fx.entity:SetParent(player.entity)
+                                fx.Transform:SetScale(0.5, 0.5, 0.5)
+                                fx:DoTaskInTime(5, function() 
+                                    if fx:IsValid() then fx:Remove() end 
+                                end)
+                            end
+                            
+                            if player.components.talker then
+                                player.components.talker:Say("我感受到了满月的力量！")
+                            end
+                        end
+                    else
+                        -- 恢复正常
+                        player.components.combat.damagemultiplier = 1
+                        if player.AnimState then
+                            player.AnimState:SetMultColour(1, 1, 1, 1)
+                        end
+                    end
+                end
+                
+                -- 夜晚理智影响
+                if player.components.sanity then
+                    if TheWorld.state.isnight then
+                        if TheWorld.state.isfullmoon then
+                            -- 满月增加理智恢复
+                            player.components.sanity.dapperness = 2
+                        else
+                            -- 其他月相减轻理智损失
+                            player.components.sanity.night_drain_mult = 0.5
+                        end
+                    else
+                        -- 白天恢复正常
+                        player.components.sanity.dapperness = 0
+                        player.components.sanity.night_drain_mult = 1
+                    end
+                end
+            end
+            
+            -- 日夜变化监听
+            local function on_day_changed(inst, isday)
+                if isday then
+                    -- 白天移除光效
+                    if light and light:IsValid() then
+                        light:Remove()
+                        light = nil
+                    end
+                    
+                    -- 恢复正常
+                    if player.AnimState then
+                        player.AnimState:SetMultColour(1, 1, 1, 1)
+                    end
+                else
+                    -- 夜晚调用月相变化处理
+                    on_phase_changed(inst, TheWorld.state.moonphase)
+                end
+            end
+            
+            TheWorld:ListenForEvent("moonphasechanged", on_phase_changed)
+            TheWorld:ListenForEvent("dusktime", function() on_day_changed(player, false) end)
+            TheWorld:ListenForEvent("daytime", function() on_day_changed(player, true) end)
+            
+            -- 初始化
+            on_phase_changed(player, TheWorld.state.moonphase)
+            
+            return function()
+                if light and light:IsValid() then
+                    if light and light:IsValid() then
+                        light:Remove()
+                    end
+                    
+                    -- 恢复玩家状态
+                    if player.components.combat then
+                        player.components.combat.damagemultiplier = 1
+                    end
+                    
+                    if player.AnimState then
+                        player.AnimState:SetMultColour(1, 1, 1, 1)
+                    end
+                    
+                    if player.components.sanity then
+                        player.components.sanity.dapperness = 0
+                        player.components.sanity.night_drain_mult = 1
+                    end
+                                             
+                    TheWorld:RemoveEventCallback("moonphasechanged", on_phase_changed)
+                    TheWorld:RemoveEventCallback("dusktime", function() on_day_changed(player, false) end)
+                    TheWorld:RemoveEventCallback("daytime", function() on_day_changed(player, true) end)
+                    
+                    DebugLog(3, "清理月光祝福效果")
+                end
+            end
+        end
+    },
+    {              
+        id = "BUFF_147",
+        name = "星辰指引",
+        description = "夜晚时你能看到星星指引的方向！",
+        fn = function(player)
+                -- 夜晚移动速度加快
+                local night_speed_task = nil
+                
+                -- 日夜更替处理
+                local function on_day_changed(inst, isday)
+                    if night_speed_task then
+                        night_speed_task:Cancel()
+                        night_speed_task = nil
+                    end
+                    
+                    if not isday and player.components.locomotor then
+                        -- 夜晚启动速度增益
+                        player.components.locomotor:SetExternalSpeedMultiplier(player, "night_speed", 1.4)
+                        
+                        -- 创建星星效果
+                        night_speed_task = player:DoPeriodicTask(3, function()
+                            if not TheWorld.state.isnight then return end
+                            
+                            local x, y, z = player.Transform:GetWorldPosition()
+                            
+                            -- 创建星星粒子
+                            for i = 1, 3 do
+                                local fx = SpawnPrefab("sparklefx")
+                                if fx then
+                                    local angle = math.random() * 2 * math.pi
+                                    local radius = math.random() * 2
+                                    fx.Transform:SetPosition(x + radius * math.cos(angle), y + 2, z + radius * math.sin(angle))
+                                    
+                                    -- 一段时间后消失
+                                    fx:DoTaskInTime(2, function()
+                                        if fx:IsValid() then
+                                            fx:Remove()
+                                        end
+                                    end)
+                                end
+                            end
+                            
+                            -- 偶尔说话
+                            if math.random() < 0.2 and player.components.talker then
+                                local messages = {
+                                    "星星在为我指路...",
+                                    "夜色如此美丽！",
+                                    "星空下行走真是惬意！",
+                                    "我能感觉到星星的能量！"
+                                }
+                                player.components.talker:Say(messages[math.random(#messages)])
+                            end
+                        end)
+                    else
+                        -- 白天移除速度增益
+                        if player.components.locomotor then
+                            player.components.locomotor:RemoveExternalSpeedMultiplier(player, "night_speed")
+                        end
+                    end
+                end
+                
+                -- 添加夜视能力
+                player:AddTag("nightvision")
+                
+                -- 监听日夜更替
+                TheWorld:ListenForEvent("dusktime", function() on_day_changed(player, false) end)
+                TheWorld:ListenForEvent("daytime", function() on_day_changed(player, true) end)
+                
+                -- 初始化
+                on_day_changed(player, not TheWorld.state.isnight)
+                
+                -- 提高夜晚理智恢复
+                if player.components.sanity then
+                    player.components.sanity.night_drain_mult = 0
+                end
+                
+                return function()
+                    if night_speed_task then
+                        night_speed_task:Cancel()
+                    end
+                    
+                    if player.components.locomotor then
+                        player.components.locomotor:RemoveExternalSpeedMultiplier(player, "night_speed")
+                    end
+                    
+                    player:RemoveTag("nightvision")
+                    
+                    if player.components.sanity then
+                        player.components.sanity.night_drain_mult = 1
+                    end
+                    
+                    TheWorld:RemoveEventCallback("dusktime", function() on_day_changed(player, false) end)
+                    TheWorld:RemoveEventCallback("daytime", function() on_day_changed(player, true) end)
+                    
+                    DebugLog(3, "清理星辰指引效果")
+                end
+            end
+        },
+        {
+            id = "BUFF_148",
+            name = "工具精通",
+            description = "你使用工具的效率大大提高！",
+            fn = function(player)
+                -- 提高工具效率
+                local tool_task = player:DoPeriodicTask(0.1, function()
+                    local equipped = player.components.inventory and player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                    
+                    if equipped and equipped.components.tool then
+                        -- 添加发光效果
+                        if not equipped.tool_glow_fx and math.random() < 0.1 then
+                            local fx = SpawnPrefab("deer_food_fx")
+                            if fx then
+                                fx.entity:SetParent(equipped.entity)
+                                fx.Transform:SetPosition(0, 0, 0)
+                                equipped.tool_glow_fx = fx
+                            end
+                        end
+                        
+                        -- 提高工作效率
+                        for action, effectiveness in pairs(equipped.components.tool.effectiveness) do
+                            equipped.components.tool.effectiveness[action] = 2.0
+                        end
+                        
+                        -- 减少工具耐久消耗
+                        if equipped.components.finiteuses and not equipped.original_consume_per_use then
+                            equipped.original_consume_per_use = equipped.components.finiteuses.consumption_rate
+                            equipped.components.finiteuses.consumption_rate = 0.5
+                        end
+                    elseif equipped and equipped.tool_glow_fx then
+                        -- 移除不再装备的工具的发光效果
+                        if equipped.tool_glow_fx:IsValid() then
+                            equipped.tool_glow_fx:Remove()
+                        end
+                        equipped.tool_glow_fx = nil
+                        
+                        -- 恢复原始耐久消耗
+                        if equipped.components.finiteuses and equipped.original_consume_per_use then
+                            equipped.components.finiteuses.consumption_rate = equipped.original_consume_per_use
+                            equipped.original_consume_per_use = nil
+                        end
+                    end
+                end)
+                
+                -- 加快工作动作
+                if player.components.worker then
+                    player.original_min_action_time = player.components.worker.min_action_time or 0.5
+                    player.components.worker.min_action_time = player.original_min_action_time * 0.5
+                end
+                
+                -- 装备工具时的事件处理
+                local function on_item_equipped(inst, data)
+                    if data and data.item and data.item.components.tool then
+                        -- 工具装备特效
+                        local fx = SpawnPrefab("lavaarena_creature_teleport_small_fx")
+                        if fx then
+                            fx.entity:SetParent(data.item.entity)
+                            fx:DoTaskInTime(1, function() 
+                                if fx:IsValid() then fx:Remove() end 
+                            end)
+                        end
+                        
+                        if player.components.talker then
+                            player.components.talker:Say("这工具在我手里更称手了！")
+                        end
+                    end
+                end
+                
+                player:ListenForEvent("equip", on_item_equipped)
+                
+                return function()
+                    if tool_task then
+                        tool_task:Cancel()
+                    end
+                    
+                    -- 恢复工作时间
+                    if player.components.worker and player.original_min_action_time then
+                        player.components.worker.min_action_time = player.original_min_action_time
+                        player.original_min_action_time = nil
+                    end
+                    
+                    -- 恢复所有工具状态
+                    if player.components.inventory then
+                        for _, item in pairs(player.components.inventory.itemslots) do
+                            if item and item.components.tool then
+                                -- 恢复原始效率
+                                for action, _ in pairs(item.components.tool.effectiveness) do
+                                    item.components.tool.effectiveness[action] = 1.0
+                                end
+                                
+                                -- 恢复原始耐久消耗
+                                if item.components.finiteuses and item.original_consume_per_use then
+                                    item.components.finiteuses.consumption_rate = item.original_consume_per_use
+                                    item.original_consume_per_use = nil
+                                end
+                                
+                                -- 移除发光效果
+                                if item.tool_glow_fx and item.tool_glow_fx:IsValid() then
+                                    item.tool_glow_fx:Remove()
+                                    item.tool_glow_fx = nil
+                                end
+                            end
+                        end
+                    end
+                    
+                    player:RemoveEventCallback("equip", on_item_equipped)
+                    
+                    DebugLog(3, "清理工具精通效果")
+                end
+            end
+        },
+        {
+            id = "BUFF_149",
+            name = "防御反射",
+            description = "你能反弹部分伤害回敌人身上！",
+            fn = function(player)
+                -- 增加基础防御
+                if player.components.health then
+                    player.original_absorb = player.components.health.absorb or 0
+                    player.components.health.absorb = player.original_absorb + 0.3
+                end
+                
+                -- 添加反伤效果
+                local function on_attacked(inst, data)
+                    if not data or not data.attacker or data.attacker:HasTag("player") then return end
+                    
+                    local attacker = data.attacker
+                    local damage = data.damage or 0
+                    
+                    -- 创建反射效果
+                    local fx = SpawnPrefab("round_puff_fx")
+                    if fx then
+                        local x, y, z = player.Transform:GetWorldPosition()
+                        fx.Transform:SetPosition(x, y, z)
+                    end
+                    
+                    if attacker.components.health and not attacker.components.health:IsDead() then
+                        -- 反弹30%伤害
+                        local reflect_damage = damage * 0.3
+                        attacker.components.health:DoDelta(-reflect_damage)
+                        
+                        -- 击退效果
+                        if attacker.Physics then
+                            local x1, y1, z1 = player.Transform:GetWorldPosition()
+                            local x2, y2, z2 = attacker.Transform:GetWorldPosition()
+                            
+                            local angle = math.atan2(z2 - z1, x2 - x1)
+                            local speed = 5
+                            local knockback_speed = Vector3(math.cos(angle) * speed, 0, math.sin(angle) * speed)
+                            
+                            attacker.Physics:SetVel(knockback_speed.x, 0, knockback_speed.z)
+                        end
+                        
+                        -- 特效
+                        local damage_fx = SpawnPrefab("impact")
+                        if damage_fx then
+                            local x, y, z = attacker.Transform:GetWorldPosition()
+                            damage_fx.Transform:SetPosition(x, y, z)
+                        end
+                        
+                        if player.components.talker and math.random() < 0.3 then
+                            local messages = {
+                                "你的攻击对我无效！",
+                                "这就是你的攻击的下场！",
+                                "感受你自己的力量吧！",
+                                "反击！"
+                            }
+                            player.components.talker:Say(messages[math.random(#messages)])
+                        end
+                    end
+                end
+                
+                player:ListenForEvent("attacked", on_attacked)
+                
+                -- 添加防御光环
+                local aura = player:DoPeriodicTask(1, function()
+                    -- 随机生成防护特效
+                    if math.random() < 0.2 then
+                        local x, y, z = player.Transform:GetWorldPosition()
+                        local angle = math.random() * 2 * math.pi
+                        local radius = 1.5
+                        
+                        local fx = SpawnPrefab("sparks_fx")
+                        if fx then
+                            fx.Transform:SetPosition(x + radius * math.cos(angle), y, z + radius * math.sin(angle))
+                            fx:DoTaskInTime(1, function() 
+                                if fx:IsValid() then fx:Remove() end 
+                            end)
+                        end
+                    end
+                end)
+                
+                -- 视觉标识
+                player:AddTag("reflective_shield")
+                
+                return function()
+                    if player.components.health then
+                        player.components.health.absorb = player.original_absorb or 0
+                        player.original_absorb = nil
+                    end
+                    
+                    player:RemoveEventCallback("attacked", on_attacked)
+                    
+                    if aura then
+                        aura:Cancel()
+                    end
+                    
+                    player:RemoveTag("reflective_shield")
+                    
+                    DebugLog(3, "清理防御反射效果")
+                end
+            end
+        },
+        {
+            id = "BUFF_150",
+            name = "熔岩行者",
+            description = "你可以在熔岩上行走且不受高温影响！",
+            fn = function(player)
+                -- 免疫火焰伤害
+                player:AddTag("fireimmune")
+                
+                -- 提高热量耐受
+                if player.components.temperature then
+                    player.original_overheat_temp = player.components.temperature.overheattemp or 70
+                    player.components.temperature.overheattemp = 100
+                    
+                    player.original_current_temp = player.components.temperature.current
+                    player.components.temperature.current = 50 -- 设置为温和温度
+                    
+                    player.original_rate = player.components.temperature.rate
+                    player.components.temperature.rate = 0 -- 停止温度变化
+                end
+                
+                -- 脚步特效
+                local footstep_task = player:DoPeriodicTask(0.3, function()
+                    if player.sg and player.sg:HasStateTag("moving") then
+                        local x, y, z = player.Transform:GetWorldPosition()
+                        
+                        -- 熔岩足迹特效
+                        local fx = SpawnPrefab("round_puff_fx")
+                        if fx then
+                            fx.Transform:SetPosition(x, y, z)
+                            fx.Transform:SetScale(0.5, 0.5, 0.5)
+                            
+                            if fx.AnimState then
+                                fx.AnimState:SetMultColour(1, 0.5, 0, 1)
+                            end
+                            
+                            fx:DoTaskInTime(1, function() 
+                                if fx:IsValid() then fx:Remove() end 
+                            end)
+                        end
+                        
+                        -- 偶尔创建火焰
+                        if math.random() < 0.2 then
+                            local fire = SpawnPrefab("campfire")
+                            if fire then
+                                fire.Transform:SetPosition(x, y, z)
+                                fire.Transform:SetScale(0.5, 0.5, 0.5)
+                                
+                                -- 缩短存在时间
+                                fire:DoTaskInTime(5, function() 
+                                    if fire:IsValid() then 
+                                        fire:Remove() 
+                                    end 
+                                end)
+                            end
+                        end
+                    end
+                end)
+                
+                -- 在火上行走不受伤
+                player:AddTag("lavawader")
+                
+                -- 附近生物受到热伤害
+                local heat_aura = player:DoPeriodicTask(1, function()
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    local ents = TheSim:FindEntities(x, y, z, 4, nil, {"player", "companion", "INLIMBO", "fireimmune"})
+                    
+                    for _, ent in ipairs(ents) do
+                        -- 对生物造成高温伤害
+                        if ent.components.health and not ent.components.health:IsDead() and math.random() < 0.3 then
+                            ent.components.health:DoDelta(-3)
+                            
+                            -- 点燃可燃物
+                            if ent.components.burnable then
+                                ent.components.burnable:Ignite()
+                            end
+                            
+                            -- 热气效果
+                            local heat_fx = SpawnPrefab("heatwave_fx")
+                            if heat_fx then
+                                local ex, ey, ez = ent.Transform:GetWorldPosition()
+                                heat_fx.Transform:SetPosition(ex, ey, ez)
+                            end
+                        end
+                    end
+                end)
+                
+                -- 视觉效果
+                if player.AnimState then
+                    player.AnimState:SetMultColour(1.2, 0.8, 0.8, 1)
+                end
+                
+                return function()
+                    player:RemoveTag("fireimmune")
+                    player:RemoveTag("lavawader")
+                    
+                    if player.components.temperature then
+                        player.components.temperature.overheattemp = player.original_overheat_temp or 70
+                        player.components.temperature.current = player.original_current_temp or 30
+                        player.components.temperature.rate = player.original_rate or 1
+                        
+                        player.original_overheat_temp = nil
+                        player.original_current_temp = nil
+                        player.original_rate = nil
+                    end
+                    
+                    if footstep_task then
+                        footstep_task:Cancel()
+                    end
+                    
+                    if heat_aura then
+                        heat_aura:Cancel()
+                    end
+                    
+                    if player.AnimState then
+                        player.AnimState:SetMultColour(1, 1, 1, 1)
+                    end
+                    
+                    DebugLog(3, "清理熔岩行者效果")
+                end
+            end
+        },
+    }
+    -- DEBUFF效果列表定义 (负面效果)
 local DEBUFF_LIST = {
     {
         id = "DEBUFF_001",

@@ -1,7 +1,7 @@
-name = "三百喜"
-description = "每天给玩家一个随机的惊喜效果，一共有三百种效果，可能有些无法正常使用。"
+name = "每日惊喜"
+description = "每天给玩家一个随机的惊喜效果，一共有三百种效果，好坏参半，可能有些无法正常使用。"
 author = "凌(Va6gn)"
-version = "1.6" 
+version = "2.0"
 
 -- 游戏兼容性                               
 dst_compatible = true
@@ -95,6 +95,6 @@ configuration_options = {
             {description = "仅警告", data = 1},
             {description = "无日志", data = 0}
         },
-        default = 1
+        default = 2
     },
 }
