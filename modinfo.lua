@@ -1,7 +1,7 @@
 name = "每日惊喜"
 description = "每天给玩家一个随机的惊喜效果，一共有三百种效果，好坏参半，可能有些无法正常使用。"
 author = "凌(Va6gn)"
-version = "2.1"
+version = "2.2"
 
 -- 游戏兼容性                               
 dst_compatible = true

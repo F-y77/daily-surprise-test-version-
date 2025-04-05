@@ -11663,7 +11663,1869 @@ local DEBUFF_LIST = {
                 DebugLog(3, "清理混乱诅咒效果")
             end
         end
-    }
+    },
+    {
+        id = "DEBUFF_101",
+        name = "物品滑落",
+        description = "你握不住东西了...",
+        fn = function(player)
+            -- 偶尔掉落手持物品
+            local drop_task = player:DoPeriodicTask(30, function()
+                if player.components.inventory then
+                    local equipped = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                    if equipped and math.random() < 0.4 then
+                        player.components.inventory:DropItem(equipped)
+                        
+                        if player.components.talker then
+                            player.components.talker:Say("我拿不住它了！")
+                        end
+                        
+                        -- 播放掉落音效
+                        if player.SoundEmitter then
+                            player.SoundEmitter:PlaySound("dontstarve/wilson/use_break")
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if drop_task then drop_task:Cancel() end
+                DebugLog(3, "清理物品滑落效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_102",
+        name = "心慌意乱",
+        description = "你的心跳加速，无法集中注意力...",
+        fn = function(player)
+            -- 降低移动速度
+            if player.components.locomotor then
+                player.components.locomotor:SetExternalSpeedMultiplier(player, "panic", 0.8)
+            end
+            
+            -- 偶尔触发慌乱效果
+            local panic_task = player:DoPeriodicTask(20, function()
+                if player.components.talker then
+                    local messages = {
+                        "我的心跳得好快！",
+                        "我需要冷静...",
+                        "呼吸...深呼吸...",
+                        "我感觉很不安..."
+                    }
+                    player.components.talker:Say(messages[math.random(#messages)])
+                end
+                
+                -- 播放心跳声
+                if player.SoundEmitter then
+                    player.SoundEmitter:PlaySound("dontstarve/characters/wx78/spark")
+                end
+                
+                -- 视觉效果
+                if player.HUD then
+                    player.HUD:ShakeScreen(1, 0.5, 0.02, 0.3)
+                end
+            end)
+            
+            -- 降低理智值
+            if player.components.sanity then
+                player.components.sanity.dapperness = -1
+            end
+            
+            return function()
+                if panic_task then panic_task:Cancel() end
+                
+                if player.components.locomotor then
+                    player.components.locomotor:RemoveExternalSpeedMultiplier(player, "panic")
+                end
+                
+                if player.components.sanity then
+                    player.components.sanity.dapperness = 0
+                end
+                
+                DebugLog(3, "清理心慌意乱效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_103",
+        name = "饥饿加剧",
+        description = "你的胃口变得无底洞...",
+        fn = function(player)
+            -- 加快饥饿速度
+            if player.components.hunger then
+                player.original_hunger_rate = player.components.hunger.hungerrate
+                player.components.hunger.hungerrate = player.original_hunger_rate * 2
+            end
+            
+            -- 偶尔肚子叫
+            local hunger_task = player:DoPeriodicTask(15, function()
+                if player.components.talker then
+                    local messages = {
+                        "我好饿...",
+                        "我的肚子在咕咕叫...",
+                        "我需要更多食物！",
+                        "吃的永远不够..."
+                    }
+                    player.components.talker:Say(messages[math.random(#messages)])
+                end
+                
+                -- 播放肚子叫声
+                if player.SoundEmitter then
+                    player.SoundEmitter:PlaySound("dontstarve/wilson/hungry")
+                end
+            end)
+            
+            return function()
+                if hunger_task then hunger_task:Cancel() end
+                
+                if player.components.hunger then
+                    player.components.hunger.hungerrate = player.original_hunger_rate
+                    player.original_hunger_rate = nil
+                end
+                
+                DebugLog(3, "清理饥饿加剧效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_104",
+        name = "易碎体质",
+        description = "受到的伤害增加了...",
+        fn = function(player)
+            -- 增加受到的伤害
+            if player.components.health then
+                player.original_absorb = player.components.health.absorb or 0
+                player.components.health.absorb = -0.3 -- 增加30%受到的伤害
+            end
+            
+            -- 被攻击时的特殊反应
+            local function on_attacked(inst, data)
+                if data and data.damage and data.damage > 0 then
+                    if player.components.talker then
+                        local messages = {
+                            "好痛！",
+                            "比平时更疼！",
+                            "我太脆弱了！",
+                            "啊！"
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                end
+            end
+            
+            player:ListenForEvent("attacked", on_attacked)
+            
+            return function()
+                if player.components.health then
+                    player.components.health.absorb = player.original_absorb or 0
+                    player.original_absorb = nil
+                end
+                
+                player:RemoveEventCallback("attacked", on_attacked)
+                
+                DebugLog(3, "清理易碎体质效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_105",
+        name = "寒冷刺骨",
+        description = "你总是感到异常寒冷...",
+        fn = function(player)
+            -- 降低温度
+            if player.components.temperature then
+                player.cold_task = player:DoPeriodicTask(5, function()
+                    player.components.temperature:SetTemperature(
+                        math.max(0, player.components.temperature:GetCurrent() - 5)
+                    )
+                end)
+            end
+            
+            -- 抖动效果
+            local shiver_task = player:DoPeriodicTask(10, function()
+                if player.components.talker then
+                    local messages = {
+                        "好冷...",
+                        "我在发抖...",
+                        "需要取暖...",
+                        "寒冷刺骨..."
+                    }
+                    player.components.talker:Say(messages[math.random(#messages)])
+                end
+                
+                -- 抖动动画
+                if player.AnimState then
+                    player.AnimState:PlayAnimation("hit")
+                    player.AnimState:PushAnimation("idle", true)
+                end
+                
+                -- 播放冷声音
+                if player.SoundEmitter then
+                    player.SoundEmitter:PlaySound("dontstarve/common/crafting_researchmachine_yucky")
+                end
+            end)
+            
+            return function()
+                if player.cold_task then player.cold_task:Cancel() end
+                if shiver_task then shiver_task:Cancel() end
+                
+                DebugLog(3, "清理寒冷刺骨效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_106",
+        name = "健忘症",
+        description = "你记不住地图了...",
+        fn = function(player)
+            -- 清除地图
+            if player.player_classified and player.player_classified.MapExplorer then
+                player.original_reveal_map = player.player_classified.MapExplorer.RevealMapFn
+                player.player_classified.MapExplorer.RevealMapFn = function() end
+            end
+            
+            -- 定期清除地图
+            local forget_task = player:DoPeriodicTask(30, function()
+                if player.minimap then
+                    player.minimap:ClearRevealedAreas()
+                    
+                    if player.components.talker then
+                        local messages = {
+                            "这里是哪里？",
+                            "我不记得这个地方...",
+                            "地图在哪？",
+                            "我迷路了..."
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                end
+            end)
+            
+            return function()
+                if forget_task then forget_task:Cancel() end
+                
+                if player.player_classified and player.player_classified.MapExplorer then
+                    player.player_classified.MapExplorer.RevealMapFn = player.original_reveal_map
+                    player.original_reveal_map = nil
+                end
+                
+                DebugLog(3, "清理健忘症效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_107",
+        name = "工具笨拙",
+        description = "你使用工具的效率降低了...",
+        fn = function(player)
+            -- 降低工具效率
+            local tool_task = player:DoPeriodicTask(0.5, function()
+                local equipped = player.components.inventory and player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                
+                if equipped and equipped.components.tool then
+                    -- 降低工具效率
+                    for action, effectiveness in pairs(equipped.components.tool.effectiveness) do
+                        equipped.components.tool.effectiveness[action] = 0.5
+                    end
+                    
+                    -- 增加耐久度消耗
+                    if equipped.components.finiteuses and not equipped.original_consume_per_use then
+                        equipped.original_consume_per_use = equipped.components.finiteuses.consumption_rate
+                        equipped.components.finiteuses.consumption_rate = 1.5
+                    end
+                elseif equipped and equipped.original_consume_per_use then
+                    -- 恢复耐久消耗
+                    if equipped.components.finiteuses then
+                        equipped.components.finiteuses.consumption_rate = equipped.original_consume_per_use
+                        equipped.original_consume_per_use = nil
+                    end
+                end
+            end)
+            
+            -- 偶尔工具滑落
+            local slip_task = player:DoPeriodicTask(20, function()
+                local equipped = player.components.inventory and player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                
+                if equipped and equipped.components.tool and math.random() < 0.3 then
+                    if player.components.talker then
+                        player.components.talker:Say("啊！这工具太不顺手了！")
+                    end
+                    
+                    if player.SoundEmitter then
+                        player.SoundEmitter:PlaySound("dontstarve/wilson/use_break")
+                    end
+                end
+            end)
+            
+            return function()
+                if tool_task then tool_task:Cancel() end
+                if slip_task then slip_task:Cancel() end
+                
+                -- 恢复所有工具的正常效率
+                if player.components.inventory then
+                    for _, item in pairs(player.components.inventory.itemslots) do
+                        if item and item.components.tool then
+                            for action, _ in pairs(item.components.tool.effectiveness) do
+                                item.components.tool.effectiveness[action] = 1.0
+                            end
+                            
+                            if item.components.finiteuses and item.original_consume_per_use then
+                                item.components.finiteuses.consumption_rate = item.original_consume_per_use
+                                item.original_consume_per_use = nil
+                            end
+                        end
+                    end
+                end
+                
+                DebugLog(3, "清理工具笨拙效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_108",
+        name = "迟缓反应",
+        description = "你的反应变慢了...",
+        fn = function(player)
+            -- 降低移动速度
+            if player.components.locomotor then
+                player.components.locomotor:SetExternalSpeedMultiplier(player, "slow", 0.7)
+            end
+            
+            -- 降低攻击速度
+            if player.components.combat then
+                player.original_attack_period = player.components.combat.min_attack_period
+                player.components.combat.min_attack_period = player.original_attack_period * 1.5
+            end
+            
+            -- 偶尔失去平衡
+            local stumble_task = player:DoPeriodicTask(15, function()
+                if math.random() < 0.4 then
+                    -- 暂时停止
+                    if player.components.locomotor then
+                        player.components.locomotor:Stop()
+                    end
+                    
+                    if player.components.talker then
+                        local messages = {
+                            "哎呀...",
+                            "我反应不过来...",
+                            "好慢...",
+                            "我的身体不听使唤..."
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                    
+                    -- 播放踉跄音效
+                    if player.SoundEmitter then
+                        player.SoundEmitter:PlaySound("dontstarve/wilson/hit")
+                    end
+                end
+            end)
+            
+            return function()
+                if stumble_task then stumble_task:Cancel() end
+                
+                if player.components.locomotor then
+                    player.components.locomotor:RemoveExternalSpeedMultiplier(player, "slow")
+                end
+                
+                if player.components.combat then
+                    player.components.combat.min_attack_period = player.original_attack_period
+                    player.original_attack_period = nil
+                end
+                
+                DebugLog(3, "清理迟缓反应效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_109",
+        name = "噪音敏感",
+        description = "噪音会让你头痛欲裂...",
+        fn = function(player)
+            -- 对战斗声音敏感
+            local function on_attack_other(inst, data)
+                if data and data.target then
+                    if player.components.talker then
+                        local messages = {
+                            "太吵了！",
+                            "我的头好痛！",
+                            "停止这些噪音！",
+                            "我受不了这些声音！"
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                    
+                    -- 战斗时理智损失
+                    if player.components.sanity then
+                        player.components.sanity:DoDelta(-3)
+                    end
+                    
+                    -- 视觉效果
+                    if player.HUD then
+                        player.HUD:ShakeScreen(1, 0.5, 0.02, 0.3)
+                    end
+                end
+            end
+            
+            player:ListenForEvent("onattackother", on_attack_other)
+            
+            -- 对周围声音敏感
+            local noise_task = player:DoPeriodicTask(10, function()
+                local x, y, z = player.Transform:GetWorldPosition()
+                local entities = TheSim:FindEntities(x, y, z, 10, nil, {"player", "INLIMBO"})
+                
+                local noise_level = 0
+                for _, ent in ipairs(entities) do
+                    if ent:HasTag("monster") or ent:HasTag("animal") then
+                        noise_level = noise_level + 1
+                    end
+                end
+                
+                if noise_level > 3 and player.components.sanity then
+                    player.components.sanity:DoDelta(-2)
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("太吵了！这里有太多声音！")
+                    end
+                    
+                    -- 视觉效果
+                    if player.HUD then
+                        player.HUD:ShakeScreen(0.7, 0.7, 0.02, 0.3)
+                    end
+                end
+            end)
+            
+            return function()
+                player:RemoveEventCallback("onattackother", on_attack_other)
+                
+                if noise_task then noise_task:Cancel() end
+                
+                DebugLog(3, "清理噪音敏感效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_110",
+        name = "闪光敏感",
+        description = "光亮会刺痛你的眼睛...",
+        fn = function(player)
+            -- 白天理智流失
+            if player.components.sanity then
+                player.sanity_task = player:DoPeriodicTask(5, function()
+                    if TheWorld.state.isday and not TheWorld.state.isnight then
+                        player.components.sanity:DoDelta(-2)
+                        
+                        if math.random() < 0.2 and player.components.talker then
+                            local messages = {
+                                "阳光刺痛我的眼睛！",
+                                "太亮了...",
+                                "我需要阴凉处...",
+                                "闭上眼睛..."
+                            }
+                            player.components.talker:Say(messages[math.random(#messages)])
+                        end
+                    end
+                end)
+            end
+            
+            -- 对火光敏感
+            local light_task = player:DoPeriodicTask(3, function()
+                local x, y, z = player.Transform:GetWorldPosition()
+                local lights = TheSim:FindEntities(x, y, z, 10, {"fire"}, {"INLIMBO"})
+                
+                if #lights > 0 and player.components.sanity then
+                    player.components.sanity:DoDelta(-1)
+                    
+                    if math.random() < 0.3 and player.components.talker then
+                        local messages = {
+                            "火光太刺眼了！",
+                            "我的眼睛！",
+                            "熄灭那些火！",
+                            "我受不了这光亮..."
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                    
+                    -- 视觉效果
+                    if player.HUD then
+                        player.HUD.vignette:SetVignettePriority(6, 5)
+                        player.HUD.vignette:SetVignetteIntensity(6, .5)
+                        player.HUD.vignette:SetVignetteColor(6, 1, 1, 0.8)
+                        
+                        player:DoTaskInTime(1, function()
+                            player.HUD.vignette:SetVignetteIntensity(6, 0)
+                        end)
+                    end
+                end
+            end)
+            
+            return function()
+                if player.sanity_task then player.sanity_task:Cancel() end
+                if light_task then light_task:Cancel() end
+                
+                if player.HUD then
+                    player.HUD.vignette:SetVignetteIntensity(6, 0)
+                end
+                
+                DebugLog(3, "清理闪光敏感效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_111",
+        name = "仰慕兔子",
+        description = "你对兔子产生了奇怪的迷恋...",
+        fn = function(player)
+            -- 看到兔子时会停下来
+            local rabbit_task = player:DoPeriodicTask(2, function()
+                local x, y, z = player.Transform:GetWorldPosition()
+                local rabbits = TheSim:FindEntities(x, y, z, 10, {"rabbit"}, {"INLIMBO"})
+                
+                if #rabbits > 0 and math.random() < 0.5 then
+                    -- 停止移动
+                    if player.components.locomotor then
+                        player.components.locomotor:Stop()
+                    end
+                    
+                    if player.components.talker then
+                        local messages = {
+                            "看那只可爱的兔子！",
+                            "兔兔，别跑~",
+                            "我想摸摸它的毛...",
+                            "这世上怎么会有如此可爱的生物！",
+                            "我能养它吗？"
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                    
+                    -- 面向兔子
+                    if #rabbits > 0 and rabbits[1]:IsValid() then
+                        local rx, ry, rz = rabbits[1].Transform:GetWorldPosition()
+                        player:ForceFacePoint(rx, ry, rz)
+                    end
+                end
+            end)
+            
+            -- 杀兔子时理智下降
+            local function on_killed(inst, data)
+                if data and data.victim and data.victim:HasTag("rabbit") then
+                    if player.components.sanity then
+                        player.components.sanity:DoDelta(-20)
+                    end
+                    
+                    if player.components.talker then
+                        local guilt = {
+                            "不！我做了什么！",
+                            "对不起，小兔子...",
+                            "我是个怪物！",
+                            "我怎么能伤害这么可爱的生物！",
+                            "我永远不会原谅自己！"
+                        }
+                        player.components.talker:Say(guilt[math.random(#guilt)])
+                    end
+                    
+                    -- 播放悲伤音效
+                    if player.SoundEmitter then
+                        player.SoundEmitter:PlaySound("dontstarve/characters/wx78/spark")
+                    end
+                end
+            end
+            
+            player:ListenForEvent("killed", on_killed)
+            
+            return function()
+                if rabbit_task then rabbit_task:Cancel() end
+                player:RemoveEventCallback("killed", on_killed)
+                DebugLog(3, "清理仰慕兔子效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_112",
+        name = "无法收集",
+        description = "你捡不起东西了...",
+        fn = function(player)
+            -- 不能捡起物品
+            local old_pickup = ACTIONS.PICKUP.fn
+            ACTIONS.PICKUP.fn = function(act)
+                if act and act.doer == player then
+                    if act.target and act.target.prefab and player.components.talker then
+                        local messages = {
+                            "我拿不起来！",
+                            "我的手好像不听使唤...",
+                            "它太滑了！",
+                            "我捡不起这个...",
+                            "它从我手里溜走了！"
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                    
+                    -- 播放滑落音效
+                    if player.SoundEmitter then
+                        player.SoundEmitter:PlaySound("dontstarve/wilson/use_break")
+                    end
+                    
+                    return false
+                end
+                return old_pickup(act)
+            end
+            
+            -- 偶尔能够捡起东西的反转效果
+            local lucky_task = player:DoPeriodicTask(30, function()
+                if math.random() < 0.2 then
+                    ACTIONS.PICKUP.fn = old_pickup
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("哦！我好像能捡东西了！")
+                    end
+                    
+                    -- 短暂恢复后再次失效
+                    player:DoTaskInTime(10, function()
+                        if player:IsValid() then
+                            ACTIONS.PICKUP.fn = function(act)
+                                if act and act.doer == player then
+                                    if player.components.talker then
+                                        player.components.talker:Say("又拿不起来了...")
+                                    end
+                                    return false
+                                end
+                                return old_pickup(act)
+                            end
+                        end
+                    end)
+                end
+            end)
+            
+            return function()
+                ACTIONS.PICKUP.fn = old_pickup
+                if lucky_task then lucky_task:Cancel() end
+                DebugLog(3, "清理无法收集效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_113",
+        name = "意外爆炸",
+        description = "你偶尔会引起小爆炸...",
+        fn = function(player)
+            -- 随机爆炸效果
+            local boom_task = player:DoPeriodicTask(math.random(30, 60), function()
+                if player.components.talker then
+                    player.components.talker:Say("我感觉不太对劲...")
+                end
+                
+                -- 倒计时提示
+                player:DoTaskInTime(2, function()
+                    if player:IsValid() and player.components.talker then
+                        player.components.talker:Say("噢不！要来了！")
+                    end
+                end)
+                
+                -- 爆炸效果
+                player:DoTaskInTime(3, function()
+                    if player:IsValid() then
+                        local x, y, z = player.Transform:GetWorldPosition()
+                        
+                        -- 创建爆炸效果但不伤害玩家
+                        local explosion = SpawnPrefab("explode_small")
+                        if explosion then
+                            explosion.Transform:SetPosition(x, y, z)
+                        end
+                        
+                        -- 对玩家造成轻微伤害
+                        if player.components.health and not player.components.health:IsDead() then
+                            player.components.health:DoDelta(-5)
+                        end
+                        
+                        -- 击退附近生物
+                        local ents = TheSim:FindEntities(x, y, z, 5, nil, {"player", "INLIMBO", "wall"})
+                        for _, ent in ipairs(ents) do
+                            if ent.Physics and ent ~= player then
+                                local x2, y2, z2 = ent.Transform:GetWorldPosition()
+                                local angle = math.atan2(z2 - z, x2 - x)
+                                local speed = 5
+                                local knockback = Vector3(math.cos(angle) * speed, 0, math.sin(angle) * speed)
+                                
+                                ent.Physics:SetVel(knockback.x, 0, knockback.z)
+                            end
+                        end
+                        
+                        if player.components.talker then
+                            player.components.talker:Say("砰！")
+                        end
+                    end
+                end)
+            end)
+            
+            return function()
+                if boom_task then boom_task:Cancel() end
+                DebugLog(3, "清理意外爆炸效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_114",
+        name = "反向移动",
+        description = "你的移动方向被反转了...",
+        fn = function(player)
+            -- 记录原始控制函数
+            if player.components.locomotor then
+                player.original_run_dir = player.components.locomotor.RunInDirection
+                player.original_walk_dir = player.components.locomotor.WalkInDirection
+                
+                -- 反转方向
+                player.components.locomotor.RunInDirection = function(self, dir)
+                    return player.original_run_dir(self, dir + math.pi)
+                end
+                
+                player.components.locomotor.WalkInDirection = function(self, dir)
+                    return player.original_walk_dir(self, dir + math.pi)
+                end
+            end
+            
+            -- 提示玩家
+            local hint_task = player:DoPeriodicTask(20, function()
+                if player.components.talker then
+                    local messages = {
+                        "我的方向感错乱了！",
+                        "为什么我往反方向走？",
+                        "我控制不了我的移动方向！",
+                        "左变成右，右变成左...",
+                        "这太让人困惑了！"
+                    }
+                    player.components.talker:Say(messages[math.random(#messages)])
+                end
+            end)
+            
+            return function()
+                if hint_task then hint_task:Cancel() end
+                
+                -- 恢复原始控制函数
+                if player.components.locomotor then
+                    if player.original_run_dir then
+                        player.components.locomotor.RunInDirection = player.original_run_dir
+                        player.original_run_dir = nil
+                    end
+                    
+                    if player.original_walk_dir then
+                        player.components.locomotor.WalkInDirection = player.original_walk_dir
+                        player.original_walk_dir = nil
+                    end
+                end
+                
+                DebugLog(3, "清理反向移动效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_115",
+        name = "跳跃狂",
+        description = "你控制不住自己跳来跳去...",
+        fn = function(player)
+            -- 随机跳跃
+            local jump_task = player:DoPeriodicTask(math.random(5, 15), function()
+                if math.random() < 0.4 and player.AnimState then
+                    -- 播放跳跃动画
+                    player.AnimState:PlayAnimation("jump_pre")
+                    player.AnimState:PushAnimation("jump")
+                    player.AnimState:PushAnimation("jump_pst", false)
+                    player.AnimState:PushAnimation("idle", true)
+                    
+                    -- 阻止移动
+                    if player.components.locomotor then
+                        player.components.locomotor:Stop()
+                    end
+                    
+                    -- 播放跳跃音效
+                    if player.SoundEmitter then
+                        player.SoundEmitter:PlaySound("dontstarve/movement/run_dirt")
+                    end
+                    
+                    if player.components.talker and math.random() < 0.3 then
+                        local messages = {
+                            "我控制不住我的腿！",
+                            "呃！又来了！",
+                            "跳！",
+                            "为什么我一直在跳？",
+                            "嘿咻！"
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                end
+            end)
+            
+            -- 跳跃时偶尔掉落物品
+            local function on_jumping(inst)
+                if player.components.inventory and math.random() < 0.2 then
+                    local items = {}
+                    for k, v in pairs(player.components.inventory.itemslots) do
+                        table.insert(items, v)
+                    end
+                    
+                    if #items > 0 then
+                        local item = items[math.random(#items)]
+                        if item then
+                            player.components.inventory:DropItem(item)
+                            
+                            if player.components.talker then
+                                player.components.talker:Say("哎呀！掉了一个" .. (item.name or "东西"))
+                            end
+                        end
+                    end
+                end
+            end
+            
+            player:ListenForEvent("jumpstart", on_jumping)
+            
+            return function()
+                if jump_task then jump_task:Cancel() end
+                player:RemoveEventCallback("jumpstart", on_jumping)
+                DebugLog(3, "清理跳跃狂效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_116",
+        name = "影子恐惧",
+        description = "你害怕自己的影子...",
+        fn = function(player)
+            -- 创建假的"影子"怪物偶尔吓唬玩家
+            local shadow_task = player:DoPeriodicTask(math.random(40, 60), function()
+                if player.components.talker then
+                    player.components.talker:Say("我的影子...它动了！")
+                end
+                
+                -- 白天更容易看到影子
+                if TheWorld.state.isday or math.random() < 0.3 then
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    
+                    -- 生成影子特效
+                    local shadow = SpawnPrefab("shadow_leech")
+                    if shadow then
+                        -- 放在玩家身后
+                        local angle = math.random() * math.pi * 2
+                        shadow.Transform:SetPosition(x + math.cos(angle) * 2, 0, z + math.sin(angle) * 2)
+                        
+                        -- 半透明
+                        if shadow.AnimState then
+                            shadow.AnimState:SetMultColour(0, 0, 0, 0.5)
+                        end
+                        
+                        -- 追逐玩家
+                        shadow:DoPeriodicTask(0.1, function()
+                            if not shadow:IsValid() or not player:IsValid() then return end
+                            
+                            local px, py, pz = player.Transform:GetWorldPosition()
+                            local sx, sy, sz = shadow.Transform:GetWorldPosition()
+                            
+                            -- 总是在玩家背后
+                            local angle = math.atan2(pz - sz, px - sx) + math.pi
+                            local distance = 3
+                            shadow.Transform:SetPosition(px + math.cos(angle) * distance, 0, pz + math.sin(angle) * distance)
+                        end)
+                        
+                        -- 几秒后消失
+                        shadow:DoTaskInTime(5, function()
+                            if shadow:IsValid() then
+                                shadow:Remove()
+                            end
+                        end)
+                        
+                        -- 降低理智
+                        if player.components.sanity then
+                            player.components.sanity:DoDelta(-10)
+                        end
+                        
+                        -- 播放恐怖音效
+                        if player.SoundEmitter then
+                            player.SoundEmitter:PlaySound("dontstarve/sanity/creature1")
+                        end
+                    end
+                end
+            end)
+            
+            -- 理智值下降
+            if player.components.sanity then
+                player.components.sanity.dapperness = -2
+            end
+            
+            -- 玩家偶尔回头
+            local look_task = player:DoPeriodicTask(math.random(10, 20), function()
+                if math.random() < 0.3 then
+                    if player.components.talker then
+                        local messages = {
+                            "有人在跟着我吗？",
+                            "我感觉背后有东西...",
+                            "我的影子在做什么？",
+                            "它在看着我...",
+                            "别跟着我！"
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                    
+                    -- 播放恐惧音效
+                    if player.SoundEmitter then
+                        player.SoundEmitter:PlaySound("dontstarve/ghost/ghost_haunt")
+                    end
+                end
+            end)
+            
+            return function()
+                if shadow_task then shadow_task:Cancel() end
+                if look_task then look_task:Cancel() end
+                
+                if player.components.sanity then
+                    player.components.sanity.dapperness = 0
+                end
+                
+                DebugLog(3, "清理影子恐惧效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_117",
+        name = "食物变质",
+        description = "你携带的食物会加速腐烂...",
+        fn = function(player)
+            -- 加速食物腐烂
+            local rot_task = player:DoPeriodicTask(5, function()
+                if player.components.inventory then
+                    -- 查找所有食物
+                    local foods = player.components.inventory:FindItems(function(item)
+                        return item.components.perishable ~= nil
+                    end)
+                    
+                    for _, food in ipairs(foods) do
+                        if food.components.perishable then
+                            -- 加速腐烂
+                            food.components.perishable:ReducePercent(0.05)
+                            
+                            -- 如果食物即将腐烂，提醒玩家
+                            if food.components.perishable:GetPercent() < 0.2 and math.random() < 0.2 then
+                                if player.components.talker then
+                                    local messages = {
+                                        "我的食物闻起来不太对...",
+                                        "它在变质！",
+                                        "这个食物要坏了！",
+                                        "我得快点吃掉它！",
+                                        "好臭！"
+                                    }
+                                    player.components.talker:Say(messages[math.random(#messages)])
+                                end
+                                
+                                -- 生成苍蝇特效
+                                local fx = SpawnPrefab("flies")
+                                if fx then
+                                    fx.entity:SetParent(player.entity)
+                                    fx:DoTaskInTime(3, function()
+                                        if fx:IsValid() then
+                                            fx:Remove()
+                                        end
+                                    end)
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            -- 腐烂食物产生的恶心味道
+            local smell_task = player:DoPeriodicTask(math.random(20, 30), function()
+                if player.components.inventory then
+                    local rotten_food = player.components.inventory:FindItems(function(item)
+                        return item.prefab == "spoiled_food"
+                    end)
+                    
+                    if #rotten_food > 2 then
+                        if player.components.talker then
+                            local messages = {
+                                "这气味太恶心了！",
+                                "我忍不了这个味道！",
+                                "呕！",
+                                "我得扔掉这些腐烂的食物！",
+                                "谁在我口袋里放了臭鸡蛋？"
+                            }
+                            player.components.talker:Say(messages[math.random(#messages)])
+                        end
+                        
+                        -- 降低理智值
+                        if player.components.sanity then
+                            player.components.sanity:DoDelta(-5)
+                        end
+                        
+                        -- 附近生物可能会被臭味吸引
+                        local x, y, z = player.Transform:GetWorldPosition()
+                        local creatures = TheSim:FindEntities(x, y, z, 20, {"animal"}, {"INLIMBO"})
+                        
+                        for _, creature in ipairs(creatures) do
+                            if creature.components.combat then
+                                creature.components.combat:SetTarget(player)
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if rot_task then rot_task:Cancel() end
+                if smell_task then smell_task:Cancel() end
+                DebugLog(3, "清理食物变质效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_118",
+        name = "惊人打喷嚏",
+        description = "你无法控制地打喷嚏...",
+        fn = function(player)
+            -- 定期打喷嚏
+            local sneeze_task = player:DoPeriodicTask(math.random(20, 40), function()
+                if player.components.talker then
+                    -- 喷嚏前兆
+                    player.components.talker:Say("啊...啊...")
+                    
+                    -- 等待一会儿再打喷嚏
+                    player:DoTaskInTime(1.5, function()
+                        if player:IsValid() then
+                            -- 打喷嚏
+                            if player.components.talker then
+                                player.components.talker:Say("啊啾！")
+                            end
+                            
+                            -- 播放喷嚏音效
+                            if player.SoundEmitter then
+                                player.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+                            end
+                            
+                            -- 播放喷嚏动画
+                            if player.AnimState then
+                                player.AnimState:PlayAnimation("hit")
+                                player.AnimState:PushAnimation("idle", true)
+                            end
+                            
+                            -- 影响附近生物
+                            local x, y, z = player.Transform:GetWorldPosition()
+                            local ents = TheSim:FindEntities(x, y, z, 4, nil, {"player", "INLIMBO", "wall"})
+                            
+                            for _, ent in ipairs(ents) do
+                                -- 小动物和鸟类可能会被惊吓
+                                if ent:HasTag("animal") or ent:HasTag("bird") then
+                                    if ent.components.locomotor then
+                                        -- 让动物逃跑
+                                        local ex, ey, ez = ent.Transform:GetWorldPosition()
+                                        local angle = math.atan2(ez - z, ex - x)
+                                        ent.components.locomotor:RunInDirection(angle)
+                                    end
+                                    
+                                    -- 鸟类会飞走
+                                    if ent:HasTag("bird") and ent.components.inventoryitem then
+                                        ent.components.inventoryitem:EnablePickup(false)
+                                        ent:DoTaskInTime(2, function()
+                                            if ent:IsValid() then
+                                                ent:Remove()
+                                            end
+                                        end)
+                                        
+                                        local fx = SpawnPrefab("feather_crow")
+                                        if fx then
+                                            fx.Transform:SetPosition(ent.Transform:GetWorldPosition())
+                                        end
+                                    end
+                                end
+                                
+                                -- 可能会掉落手持物品
+                                if ent.components.inventory and math.random() < 0.2 then
+                                    local equipped = ent.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                                    if equipped then
+                                        ent.components.inventory:DropItem(equipped)
+                                    end
+                                end
+                            end
+                        end
+                    end)
+                end
+            end)
+            
+            -- 花粉区域加剧打喷嚏
+            local pollen_task = player:DoPeriodicTask(5, function()
+                local x, y, z = player.Transform:GetWorldPosition()
+                local flowers = TheSim:FindEntities(x, y, z, 10, {"flower"}, {"INLIMBO"})
+                
+                if #flowers > 5 and math.random() < 0.4 then
+                    if player.components.talker then
+                        player.components.talker:Say("这些花粉..啊啾！")
+                    end
+                    
+                    -- 播放喷嚏音效
+                    if player.SoundEmitter then
+                        player.SoundEmitter:PlaySound("dontstarve/common/deathpoof")
+                    end
+                    
+                    -- 短暂减速
+                    if player.components.locomotor then
+                        player.components.locomotor:SetExternalSpeedMultiplier(player, "sneeze", 0.7)
+                        
+                        player:DoTaskInTime(2, function()
+                            if player:IsValid() and player.components.locomotor then
+                                player.components.locomotor:RemoveExternalSpeedMultiplier(player, "sneeze")
+                            end
+                        end)
+                    end
+                end
+            end)
+            
+            return function()
+                if sneeze_task then sneeze_task:Cancel() end
+                if pollen_task then pollen_task:Cancel() end
+                
+                if player.components.locomotor then
+                    player.components.locomotor:RemoveExternalSpeedMultiplier(player, "sneeze")
+                end
+                
+                DebugLog(3, "清理惊人打喷嚏效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_119",
+        name = "无尽口渴",
+        description = "你总是感到口渴...",
+        fn = function(player)
+            -- 定期口渴提醒
+            local thirst_task = player:DoPeriodicTask(math.random(30, 45), function()
+                if player.components.talker then
+                    local messages = {
+                        "我好渴...",
+                        "我需要水！",
+                        "我的喉咙干得冒烟...",
+                        "有谁有水吗？",
+                        "我的嘴唇都干裂了..."
+                    }
+                    player.components.talker:Say(messages[math.random(#messages)])
+                end
+                
+                -- 降低移动速度
+                if player.components.locomotor then
+                    player.components.locomotor:SetExternalSpeedMultiplier(player, "thirst", 0.8)
+                    
+                    player:DoTaskInTime(10, function()
+                        if player:IsValid() and player.components.locomotor then
+                            player.components.locomotor:RemoveExternalSpeedMultiplier(player, "thirst")
+                        end
+                    end)
+                end
+                
+                -- 降低理智值
+                if player.components.sanity then
+                    player.components.sanity:DoDelta(-5)
+                end
+            end)
+            
+            -- 高温天气加重口渴
+            local hot_task = player:DoPeriodicTask(10, function()
+                if TheWorld.state.temperature > 40 and player.components.talker then
+                    player.components.talker:Say("这么热...更渴了！")
+                    
+                    -- 额外降低移动速度和理智值
+                    if player.components.locomotor then
+                        player.components.locomotor:SetExternalSpeedMultiplier(player, "hot_thirst", 0.7)
+                        
+                        player:DoTaskInTime(5, function()
+                            if player:IsValid() and player.components.locomotor then
+                                player.components.locomotor:RemoveExternalSpeedMultiplier(player, "hot_thirst")
+                            end
+                        end)
+                    end
+                    
+                    if player.components.sanity then
+                        player.components.sanity:DoDelta(-3)
+                    end
+                end
+            end)
+            
+            -- 看到水时的反应
+            local water_task = player:DoPeriodicTask(15, function()
+                local x, y, z = player.Transform:GetWorldPosition()
+                local is_near_water = TheWorld.Map:IsOceanAtPoint(x, 0, z)
+                
+                if is_near_water and math.random() < 0.5 then
+                    if player.components.talker then
+                        local messages = {
+                            "水！我看到水了！",
+                            "我想喝那个水...",
+                            "不行，那是海水，会更渴的！",
+                            "太折磨了，看得到喝不到...",
+                            "那水看起来真诱人..."
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                    
+                    -- 玩家可能会不自觉地走向水
+                    if math.random() < 0.3 and player.components.locomotor then
+                        local water_x, water_z
+                        -- 找到最近的海洋点
+                        for radius = 1, 10 do
+                            for i = 0, 360, 45 do
+                                local test_x = x + radius * math.cos(math.rad(i))
+                                local test_z = z + radius * math.sin(math.rad(i))
+                                if TheWorld.Map:IsOceanAtPoint(test_x, 0, test_z) then
+                                    water_x, water_z = test_x, test_z
+                                    break
+                                end
+                            end
+                            if water_x then break end
+                        end
+                        
+                        if water_x then
+                            player:ForceFacePoint(water_x, 0, water_z)
+                            player.components.locomotor:RunInDirection(player.Transform:GetRotation() * DEGREES)
+                            
+                            -- 几秒后停止
+                            player:DoTaskInTime(2, function()
+                                if player:IsValid() and player.components.locomotor then
+                                    player.components.locomotor:Stop()
+                                    
+                                    if player.components.talker then
+                                        player.components.talker:Say("不，我不能喝那个！")
+                                    end
+                                end
+                            end)
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if thirst_task then thirst_task:Cancel() end
+                if hot_task then hot_task:Cancel() end
+                if water_task then water_task:Cancel() end
+
+                if player.components.locomotor then
+                    player.components.locomotor:RemoveExternalSpeedMultiplier(player, "thirst")
+                end
+                if player.components.locomotor then
+                    player.components.locomotor:RemoveExternalSpeedMultiplier(player, "hot_thirst")
+                end
+                
+                DebugLog(3, "清理无尽口渴效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_120",
+        name = "植物讨厌",
+        description = "植物似乎很讨厌你...",
+        fn = function(player)
+            -- 被树枝拍打
+            local branch_task = player:DoPeriodicTask(math.random(20, 30), function()
+                local x, y, z = player.Transform:GetWorldPosition()
+                local trees = TheSim:FindEntities(x, y, z, 5, {"tree"}, {"stump", "burnt", "INLIMBO"})
+                
+                if #trees > 0 and math.random() < 0.5 then
+                    local tree = trees[math.random(#trees)]
+                    
+                    if tree and tree:IsValid() and player.components.health then
+                        -- 树枝拍打玩家
+                        player.components.health:DoDelta(-2)
+                        
+                        -- 播放拍打音效
+                        if player.SoundEmitter then
+                            player.SoundEmitter:PlaySound("dontstarve/creatures/leif/swipe")
+                        end
+                        
+                        if player.components.talker then
+                            local messages = {
+                                "嗷！那棵树打我！",
+                                "树枝袭击！",
+                                "植物界反抗开始了！",
+                                "这棵树讨厌我！",
+                                "嘿！小心点，树先生！"
+                            }
+                            player.components.talker:Say(messages[math.random(#messages)])
+                        end
+                        
+                        -- 晃动树木动画
+                        if tree.AnimState then
+                            tree.AnimState:PlayAnimation("sway1")
+                            tree.AnimState:PushAnimation("idle", true)
+                        end
+                    end
+                end
+            end)
+            
+            -- 被草丛绊倒
+            local trip_task = player:DoPeriodicTask(math.random(30, 45), function()
+                local x, y, z = player.Transform:GetWorldPosition()
+                local grass = TheSim:FindEntities(x, y, z, 4, {"plant"}, {"INLIMBO"})
+                
+                if #grass > 3 and math.random() < 0.4 then
+                    -- 绊倒效果
+                    if player.components.locomotor then
+                        player.components.locomotor:Stop()
+                    end
+                    
+                    -- 播放绊倒动画
+                    if player.AnimState then
+                        player.AnimState:PlayAnimation("hit")
+                        player.AnimState:PushAnimation("idle", true)
+                    end
+                    
+                    -- 播放摔倒音效
+                    if player.SoundEmitter then
+                        player.SoundEmitter:PlaySound("dontstarve/wilson/hit")
+                    end
+                    
+                    if player.components.talker then
+                        local messages = {
+                            "啊！我被绊倒了！",
+                            "这些草缠住了我的脚！",
+                            "它们是故意的！",
+                            "植物在伏击我！",
+                            "我的脚被缠住了！"
+                        }
+                        player.components.talker:Say(messages[math.random(#messages)])
+                    end
+                    
+                    -- 可能掉落物品
+                    if player.components.inventory and math.random() < 0.3 then
+                        local equipped = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                        if equipped then
+                            player.components.inventory:DropItem(equipped)
+                        end
+                    end
+                end
+            end)
+            
+            -- 树精守卫攻击几率增加
+            local leif_task = player:DoPeriodicTask(3, function()
+                -- 检测附近的树木
+                local x, y, z = player.Transform:GetWorldPosition()
+                local trees = TheSim:FindEntities(x, y, z, 15, {"tree"}, {"stump", "burnt", "INLIMBO"})
+                
+                -- 如果玩家正在砍树，增加树精几率
+                if player.sg and player.sg:HasStateTag("chopping") and #trees > 0 and math.random() < 0.03 then
+                    -- 尝试生成树精守卫
+                    local tx, ty, tz = trees[math.random(#trees)].Transform:GetWorldPosition()
+                    local leif = SpawnPrefab("leif")
+                    if leif then
+                        leif.Transform:SetPosition(tx, ty, tz)
+                        
+                        if player.components.talker then
+                            player.components.talker:Say("森林的愤怒！")
+                        end
+                    end
+                end
+            end)
+            
+            -- 植物收获减少
+            local old_pick = ACTIONS.PICK.fn
+            ACTIONS.PICK.fn = function(act)
+                local result = old_pick(act)
+                
+                if act and act.doer == player and act.target and act.target.components.pickable and math.random() < 0.5 then
+                    -- 减少收获
+                    if act.target.loot_override and act.target.loot_override[1] then
+                        local loot = act.target.loot_override[1]
+                        
+                        -- 移除多余的物品
+                        if player.components.inventory then
+                            local items = player.components.inventory:FindItems(function(item)
+                                return item.prefab == loot
+                            end)
+                            
+                            if #items > 0 and items[1] and items[1].components.stackable and items[1].components.stackable:StackSize() > 1 then
+                                items[1].components.stackable:SetStackSize(items[1].components.stackable:StackSize() - 1)
+                                
+                                if player.components.talker then
+                                    player.components.talker:Say("这植物没给我足够的收获！")
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                return result
+            end
+            
+            return function()
+                if branch_task then branch_task:Cancel() end
+                if trip_task then trip_task:Cancel() end
+                if leif_task then leif_task:Cancel() end
+                
+                ACTIONS.PICK.fn = old_pick
+                
+                DebugLog(3, "清理植物讨厌效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_120",
+        name = "影子人格",
+        description = "你的影子有了自己的想法...",
+        fn = function(player)
+            -- 创建"影子"角色
+            local shadow = nil
+            local previous_positions = {}
+            local max_positions = 20
+            
+            -- 记录玩家位置
+            local position_task = player:DoPeriodicTask(0.5, function()
+                local x, y, z = player.Transform:GetWorldPosition()
+                table.insert(previous_positions, 1, {x=x, y=y, z=z})
+                
+                if #previous_positions > max_positions then
+                    table.remove(previous_positions)
+                end
+            end)
+            
+            -- 影子跟随
+            local shadow_task = player:DoPeriodicTask(0.2, function()
+                if #previous_positions < 5 then return end
+                
+                -- 取得几秒前的位置
+                local pos = previous_positions[math.min(10, #previous_positions)]
+                
+                -- 创建或移动影子
+                if not shadow or not shadow:IsValid() then
+                    shadow = SpawnPrefab("shadow_leech")
+                    if shadow then
+                        shadow.Transform:SetPosition(pos.x, pos.y, pos.z)
+                        
+                        -- 设置影子的外观
+                        if shadow.AnimState then
+                            shadow.AnimState:SetMultColour(0, 0, 0, 0.5)
+                            shadow.AnimState:SetScale(0.8, 0.8, 0.8)
+                        end
+                        
+                        shadow:AddTag("shadow_twin")
+                        shadow.persists = false
+                    end
+                else
+                    shadow.Transform:SetPosition(pos.x, pos.y, pos.z)
+                end
+            end)
+            
+            -- 影子偶尔的行为
+            local behavior_task = player:DoPeriodicTask(math.random(20, 30), function()
+                if not shadow or not shadow:IsValid() then return end
+                
+                local behavior = math.random(1, 4)
+                
+                if behavior == 1 then
+                    -- 影子模仿玩家动作
+                    if player.AnimState and shadow.AnimState then
+                        local anim = player.AnimState:GetCurrentAnimation()
+                        if anim then
+                            shadow.AnimState:PlayAnimation(anim)
+                        end
+                    end
+                    
+                    if player.components.talker and math.random() < 0.5 then
+                        player.components.talker:Say("我的影子在模仿我！")
+                    end
+                elseif behavior == 2 then
+                    -- 影子消失再出现
+                    if shadow.AnimState then
+                        shadow.AnimState:SetMultColour(0, 0, 0, 0)
+                        
+                        shadow:DoTaskInTime(3, function()
+                            if shadow:IsValid() and shadow.AnimState then
+                                shadow.AnimState:SetMultColour(0, 0, 0, 0.5)
+                                
+                                if player.components.talker and math.random() < 0.5 then
+                                    player.components.talker:Say("它又回来了！")
+                                end
+                            end
+                        end)
+                    end
+                elseif behavior == 3 then
+                    -- 影子做出不同的动作
+                    if shadow.AnimState then
+                        local anims = {"idle_loop", "run_loop", "emote_angry", "emote_sad", "emote_happycheer"}
+                        shadow.AnimState:PlayAnimation(anims[math.random(#anims)])
+                    end
+                    
+                    if player.components.talker and math.random() < 0.5 then
+                        player.components.talker:Say("它在做什么？！")
+                    end
+                elseif behavior == 4 then
+                    -- 影子突然移动到玩家前面
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    local angle = player.Transform:GetRotation() * DEGREES
+                    local dist = 3
+                    
+                    shadow.Transform:SetPosition(x + math.cos(angle) * dist, y, z - math.sin(angle) * dist)
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("它挡住了我的路！")
+                    end
+                    
+                    -- 降低理智值
+                    if player.components.sanity then
+                        player.components.sanity:DoDelta(-10)
+                    end
+                end
+            end)
+            
+            -- 理智值下降
+            if player.components.sanity then
+                player.components.sanity.dapperness = -1
+            end
+            
+            return function()
+                if position_task then position_task:Cancel() end
+                if shadow_task then shadow_task:Cancel() end
+                if behavior_task then behavior_task:Cancel() end
+                
+                if shadow and shadow:IsValid() then
+                    shadow:Remove()
+                end
+                
+                if player.components.sanity then
+                    player.components.sanity.dapperness = 0
+                end
+                
+                DebugLog(3, "清理影子人格效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_121",
+        name = "物品交换",
+        description = "你周围的物品会自动交换位置...",
+        fn = function(player)
+            -- 定期交换物品位置
+            local swap_task = player:DoPeriodicTask(math.random(25, 35), function()
+                -- 检查周围的物品
+                local x, y, z = player.Transform:GetWorldPosition()
+                local items = TheSim:FindEntities(x, y, z, 10, {"_inventoryitem"}, {"INLIMBO", "fire"})
+                
+                if #items >= 2 then
+                    -- 选择两个物品交换位置
+                    local item1 = items[math.random(#items)]
+                    local item2 = nil
+                    
+                    repeat
+                        item2 = items[math.random(#items)]
+                    until item2 ~= item1
+                    
+                    if item1 and item1:IsValid() and item2 and item2:IsValid() then
+                        -- 获取位置
+                        local item1_x, item1_y, item1_z = item1.Transform:GetWorldPosition()
+                        local item2_x, item2_y, item2_z = item2.Transform:GetWorldPosition()
+                        
+                        -- 交换位置
+                        item1.Transform:SetPosition(item2_x, item2_y, item2_z)
+                        item2.Transform:SetPosition(item1_x, item1_y, item1_z)
+                        
+                        -- 添加特效
+                        local fx1 = SpawnPrefab("pandorachest_reset")
+                        local fx2 = SpawnPrefab("pandorachest_reset")
+                        
+                        if fx1 then
+                            fx1.Transform:SetPosition(item1_x, item1_y, item1_z)
+                        end
+                        
+                        if fx2 then
+                            fx2.Transform:SetPosition(item2_x, item2_y, item2_z)
+                        end
+                        
+                        -- 播放交换音效
+                        if player.SoundEmitter then
+                            player.SoundEmitter:PlaySound("dontstarve/common/staff_blink")
+                        end
+                        
+                        if player.components.talker and math.random() < 0.5 then
+                            local messages = {
+                                "等等，那个刚才不是在那里吗？",
+                                "物品在移动！",
+                                "我发誓刚才不是这样的！",
+                                "我的世界在重组！",
+                                "它们自己交换了位置！"
+                            }
+                            player.components.talker:Say(messages[math.random(#messages)])
+                        end
+                    end
+                end
+            end)
+            
+            -- 物品栏物品交换
+            local inventory_swap_task = player:DoPeriodicTask(math.random(40, 60), function()
+                if player.components.inventory then
+                    local items = {}
+                    for k, v in pairs(player.components.inventory.itemslots) do
+                        table.insert(items, v)
+                    end
+                    
+                    if #items >= 2 then
+                        -- 选择两个物品交换位置
+                        local idx1 = math.random(#items)
+                        local idx2 = idx1
+                        
+                        while idx2 == idx1 do
+                            idx2 = math.random(#items)
+                        end
+                        
+                        local item1 = items[idx1]
+                        local item2 = items[idx2]
+                        
+                        if item1 and item2 then
+                            -- 找到它们在物品栏中的位置
+                            local slot1, slot2 = nil, nil
+                            
+                            for k, v in pairs(player.components.inventory.itemslots) do
+                                if v == item1 then
+                                    slot1 = k
+                                elseif v == item2 then
+                                    slot2 = k
+                                end
+                            end
+                            
+                            if slot1 and slot2 then
+                                -- 交换位置
+                                player.components.inventory.itemslots[slot1] = item2
+                                player.components.inventory.itemslots[slot2] = item1
+                                
+                                -- 播放交换音效
+                                if player.SoundEmitter then
+                                    player.SoundEmitter:PlaySound("dontstarve/HUD/click_move")
+                                end
+                                
+                                if player.components.talker then
+                                    player.components.talker:Say("我的物品自己重新排列了！")
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            -- 偶尔物品消失再出现
+            local vanish_task = player:DoPeriodicTask(math.random(50, 70), function()
+                local x, y, z = player.Transform:GetWorldPosition()
+                local items = TheSim:FindEntities(x, y, z, 8, {"_inventoryitem"}, {"INLIMBO", "fire"})
+                
+                if #items > 0 then
+                    local item = items[math.random(#items)]
+                    
+                    if item and item:IsValid() then
+                        -- 记录原始位置
+                        local ix, iy, iz = item.Transform:GetWorldPosition()
+                        
+                        -- 使物品隐形
+                        item:AddTag("NOCLICK")
+                        if item.AnimState then
+                            item.AnimState:SetMultColour(1, 1, 1, 0)
+                        end
+                        
+                        -- 播放消失音效
+                        if player.SoundEmitter then
+                            player.SoundEmitter:PlaySound("dontstarve/common/ghost_haunt")
+                        end
+                        
+                        if player.components.talker and math.random() < 0.5 then
+                            player.components.talker:Say((item.name or "物品") + "消失了！")
+                        end
+                        
+                        -- 几秒后重新出现
+                        item:DoTaskInTime(math.random(3, 5), function()
+                            if item:IsValid() then
+                                -- 随机选择是否在不同位置出现
+                                local new_pos = math.random() < 0.5
+                                local nx, nz = ix, iz
+                                
+                                if new_pos then
+                                    local angle = math.random() * 2 * math.pi
+                                    local radius = math.random(2, 5)
+                                    nx = x + radius * math.cos(angle)
+                                    nz = z + radius * math.sin(angle)
+                                end
+                                
+                                -- 重新显示
+                                item:RemoveTag("NOCLICK")
+                                if item.AnimState then
+                                    item.AnimState:SetMultColour(1, 1, 1, 1)
+                                end
+                                
+                                item.Transform:SetPosition(nx, 0, nz)
+                                
+                                -- 播放出现音效
+                                if player.SoundEmitter then
+                                    player.SoundEmitter:PlaySound("dontstarve/common/ghost_haunt")
+                                end
+                                
+                                if player.components.talker and math.random() < 0.5 then
+                                    player.components.talker:Say((item.name or "物品") + "又回来了！")
+                                end
+                            end
+                        end)
+                    end
+                end
+            end)
+            
+            return function()
+                if swap_task then swap_task:Cancel() end
+                if inventory_swap_task then inventory_swap_task:Cancel() end
+                if vanish_task then vanish_task:Cancel() end
+                
+                DebugLog(3, "清理物品交换效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_122",
+        name = "地面融化",
+        description = "你所踩过的地面会暂时融化...",
+        fn = function(player)
+            local puddles = {}
+            local max_puddles = 10
+            
+            -- 创建融化效果
+            local function create_puddle(x, y, z)
+                -- 创建水坑效果
+                local puddle = SpawnPrefab("cave_leak")
+                if puddle then
+                    puddle.Transform:SetPosition(x, y, z)
+                    puddle.AnimState:SetScale(0.7, 0.7, 0.7)
+                    
+                    -- 记录水坑
+                    table.insert(puddles, puddle)
+                    
+                    -- 控制最大数量
+                    if #puddles > max_puddles then
+                        local old_puddle = table.remove(puddles, 1)
+                        if old_puddle and old_puddle:IsValid() then
+                            old_puddle:Remove()
+                        end
+                    end
+                    
+                    -- 一段时间后消失
+                    puddle:DoTaskInTime(20, function()
+                        if puddle:IsValid() then
+                            for i, p in ipairs(puddles) do
+                                if p == puddle then
+                                    table.remove(puddles, i)
+                                    break
+                                end
+                            end
+                            
+                            puddle:Remove()
+                        end
+                    end)
+                    
+                    return puddle
+                end
+                
+                return nil
+            end
+            
+            -- 监听脚步声事件
+            local footstep_timer = 0
+            local footstep_interval = 10
+            
+            local footstep_task = player:DoPeriodicTask(FRAMES, function()
+                footstep_timer = footstep_timer + 1
+                
+                if footstep_timer >= footstep_interval and player.sg and player.sg:HasStateTag("moving") then
+                    footstep_timer = 0
+                    
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    
+                    -- 创建融化效果
+                    local puddle = create_puddle(x, y, z)
+                    
+                    -- 播放融化音效
+                    if player.SoundEmitter then
+                        player.SoundEmitter:PlaySound("dontstarve/common/tool_slip")
+                    end
+                    
+                    -- 让水坑有机会绊倒玩家
+                    if math.random() < 0.1 then
+                        if player.components.locomotor then
+                            player.components.locomotor:Stop()
+                        end
+                        
+                        if player.AnimState then
+                            player.AnimState:PlayAnimation("hit")
+                            player.AnimState:PushAnimation("idle", true)
+                        end
+                        
+                        if player.components.talker then
+                            local messages = {
+                                "啊！太滑了！",
+                                "地板在融化！",
+                                "我站不稳！",
+                                "这是什么魔法？",
+                                "我的脚下是什么？"
+                            }
+                            player.components.talker:Say(messages[math.random(#messages)])
+                        end
+                    end
+                end
+            end)
+            
+            -- 水坑会影响生物
+            local puddle_effect_task = player:DoPeriodicTask(1, function()
+                for _, puddle in ipairs(puddles) do
+                    if puddle and puddle:IsValid() then
+                        local px, py, pz = puddle.Transform:GetWorldPosition()
+                        local entities = TheSim:FindEntities(px, py, pz, 2, nil, {"player", "INLIMBO", "ghost"})
+                        
+                        for _, ent in ipairs(entities) do
+                            -- 减缓移动
+                            if ent.components.locomotor and math.random() < 0.3 then
+                                ent.components.locomotor:SetExternalSpeedMultiplier(ent, "puddle_slow", 0.7)
+                                
+                                ent:DoTaskInTime(3, function()
+                                    if ent:IsValid() and ent.components.locomotor then
+                                        ent.components.locomotor:RemoveExternalSpeedMultiplier(ent, "puddle_slow")
+                                    end
+                                end)
+                            end
+                            
+                            -- 小生物可能会被困住
+                            if ent:HasTag("small") and math.random() < 0.2 then
+                                if ent.components.locomotor then
+                                    ent.components.locomotor:Stop()
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            -- 修改水坑大小
+            local puddle_scale_task = player:DoPeriodicTask(5, function()
+                for _, puddle in ipairs(puddles) do
+                    if puddle and puddle:IsValid() and puddle.AnimState then
+                        -- 随机变化水坑大小
+                        local scale = 0.5 + math.random() * 0.5
+                        puddle.AnimState:SetScale(scale, scale, scale)
+                    end
+                end
+            end)
+            
+            return function()
+                if footstep_task then footstep_task:Cancel() end
+                if puddle_effect_task then puddle_effect_task:Cancel() end
+                if puddle_scale_task then puddle_scale_task:Cancel() end
+                
+                -- 移除所有水坑
+                for _, puddle in ipairs(puddles) do
+                    if puddle and puddle:IsValid() then
+                        puddle:Remove()
+                    end
+                end
+                
+                DebugLog(3, "清理地面融化效果")
+            end
+        end
+    },
+    
+
+    
 }
 
 -- 修改世界日期变化监听
