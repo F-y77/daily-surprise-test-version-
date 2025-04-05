@@ -1205,11 +1205,6 @@ local BUFF_LIST = {
     }
 }
 
--- 将新的BUFF添加到原有列表
-for _, buff in ipairs(BUFF_LIST) do
-    table.insert(BUFF_LIST, buff)
-end
-
 -- DEBUFF效果列表定义 (负面效果)
 local DEBUFF_LIST = {
     {
@@ -2154,11 +2149,6 @@ local DEBUFF_LIST = {
         end
     }
 }
-
--- 将新的DEBUFF添加到原有列表
-for _, debuff in ipairs(DEBUFF_LIST) do
-    table.insert(DEBUFF_LIST, debuff)
-end
 
 -- 安全地应用BUFF/DEBUFF效果
 local function SafeApplyBuff(player)
