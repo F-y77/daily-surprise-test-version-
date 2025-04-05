@@ -1,5 +1,16 @@
-name = "每日惊喜"
-description = "每天给玩家一个随机的惊喜效果，一共有三百种效果，好坏参半，可能有些无法正常使用。"
+name = "󰀏每日惊喜󰀏"
+description = [[
+
+󰀏每天白天给与随机玩家一个随机的惊喜效果。
+
+󰀏一共有三百种效果，好坏各50%，有些有大量文字描述增加代入感。
+
+󰀏可能有些无法正常使用，因为数量实在过多难以校准。
+
+󰀏饥荒交流群：1042944194
+
+]]
+
 author = "凌(Va6gn)"
 version = "3.0"
 
@@ -95,6 +106,6 @@ configuration_options = {
             {description = "仅警告", data = 1},
             {description = "无日志", data = 0}
         },
-        default = 2
+        default = 1
     },
 }

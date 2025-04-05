@@ -14746,6 +14746,73 @@ local DEBUFF_LIST = {
     },
 }
 
+-- 添加到modmain.lua文件的开头部分
+
+local function SafeApplyBuff(player)
+    if not player or not player.components then return end
+    
+    -- 先清理已有效果
+    if BUFF_CLEANUP[player] then
+        DebugLog(2, "清理玩家之前的BUFF效果:", player.name)
+        for _, cleanup_fn in ipairs(BUFF_CLEANUP[player]) do
+            pcall(cleanup_fn)
+        end
+        BUFF_CLEANUP[player] = nil
+    end
+
+    -- 根据配置决定是否有几率应用DEBUFF
+    local buff_list = BUFF_LIST
+    local effect_type = "惊喜"
+    
+    if ENABLE_DEBUFF and _G.math.random() < DEBUFF_CHANCE then
+        buff_list = DEBUFF_LIST
+        effect_type = "惊吓"
+    end
+    
+    local buff = buff_list[_G.math.random(#buff_list)]
+    if buff and buff.fn then
+        local cleanup_actions = {}
+        local success, error_msg = pcall(function()
+            -- 应用效果并获取清理函数
+            local cleanup = buff.fn(player)
+            if cleanup then
+                table.insert(cleanup_actions, cleanup)
+                -- 设置定时器在BUFF持续时间结束后自动清理
+                player:DoTaskInTime(BUFF_DURATION * TUNING.TOTAL_DAY_TIME, function()
+                    if cleanup_actions[1] then
+                        pcall(cleanup_actions[1])
+                        BUFF_CLEANUP[player] = nil
+                    end
+                end)
+            end
+        end)
+        
+        if success then
+            BUFF_CLEANUP[player] = cleanup_actions
+            DebugLog(1, "成功应用" .. effect_type .. ":", buff.name)
+            if player.components.talker then
+                player.components.talker:Say("获得每日" .. effect_type .. ": " .. buff.name)
+                -- 延迟一秒显示描述
+                player:DoTaskInTime(1, function()
+                    if player.components.talker then
+                        player.components.talker:Say(buff.description)
+                    end
+                end)
+            end
+            -- 向所有玩家发送系统消息
+            if TheNet:GetIsServer() then
+                TheNet:SystemMessage(string.format("玩家 %s 获得了每日%s：%s", 
+                    player.name or "未知", 
+                    effect_type,
+                    buff.name))
+                TheNet:SystemMessage(buff.description)
+            end
+        else
+            DebugLog(1, "应用" .. effect_type .. "失败:", buff.name, error_msg)
+        end
+    end
+end
+
 -- 修改世界日期变化监听
 AddPrefabPostInit("world", function(inst)
     if not _G.TheWorld.ismastersim then return end
