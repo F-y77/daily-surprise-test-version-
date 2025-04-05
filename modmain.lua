@@ -6,22 +6,10 @@ local BUFF_CLEANUP = {}
 
 -- 在文件开头补充全局表访问
 local _G = GLOBAL
-local TUNING = _G.TUNING
-local TheNet = _G.TheNet
-local AllPlayers = _G.AllPlayers
-local Vector3 = _G.Vector3
-local EQUIPSLOTS = _G.EQUIPSLOTS
-local pcall = _G.pcall
-local PI = _G.PI
-local SpawnPrefab = _G.SpawnPrefab
-local TheWorld = _G.TheWorld
-local ACTIONS = _G.ACTIONS
-local STRINGS = _G.STRINGS
-local DEGREES = _G.DEGREES
-local FRAMES = _G.FRAMES
-local GetTime = _G.GetTime
-local Sleep = _G.Sleep
-local TheSim = _G.TheSim
+
+local env = env
+
+GLOBAL.setmetatable(env, { __index = function(t, k) return GLOBAL.rawget(GLOBAL, k) end })
 
 -- 以下两行仅在开发测试时使用，发布模组前应删除
 -- _G.CHEATS_ENABLED = true
@@ -1524,6 +1512,600 @@ local DEBUFF_LIST = {
     },
 }
 
+-- 新增BUFF效果
+local NEW_BUFF_LIST = {
+    {
+        name = "随机掉落",
+        description = "你杀死的生物会掉落随机物品，有可能是稀有物品！",
+        fn = function(player)
+            local old_onkilledother = player.OnKilledOther
+            player.OnKilledOther = function(inst, data)
+                if old_onkilledother then
+                    old_onkilledother(inst, data)
+                end
+                
+                if data and data.victim then
+                    -- 随机物品池
+                    local common_items = {"log", "rocks", "flint", "cutgrass", "twigs"}
+                    local rare_items = {"gears", "redgem", "bluegem", "purplegem", "orangegem", "yellowgem"}
+                    local epic_items = {"cane", "orangestaff", "greenstaff", "yellowstaff", "orangeamulet", "greenamulet"}
+                    
+                    -- 随机选择物品类型
+                    local rand = math.random()
+                    local item_pool
+                    if rand < 0.7 then
+                        item_pool = common_items
+                    elseif rand < 0.95 then
+                        item_pool = rare_items
+                    else
+                        item_pool = epic_items
+                        if player.components.talker then
+                            player.components.talker:Say("噢！这是什么稀有物品？")
+                        end
+                    end
+                    
+                    -- 随机选择物品并生成
+                    local item_prefab = item_pool[math.random(#item_pool)]
+                    local item = SpawnPrefab(item_prefab)
+                    if item then
+                        local x, y, z = data.victim.Transform:GetWorldPosition()
+                        item.Transform:SetPosition(x, y, z)
+                    end
+                end
+            end
+            
+            return function()
+                if player:IsValid() then
+                    player.OnKilledOther = old_onkilledother
+                end
+                DebugLog(3, "清理随机掉落效果")
+            end
+        end
+    },
+    {
+        name = "超级跳跃",
+        description = "你可以跳得超级高，跳跃时会暂时离开地面！",
+        fn = function(player)
+            -- 添加跳跃功能
+            local jump_ready = true
+            local jump_key = _G.KEY_SPACE
+            
+            local old_oncontrol = player.OnControl
+            player.OnControl = function(inst, control, down)
+                if old_oncontrol then
+                    old_oncontrol(inst, control, down)
+                end
+                
+                if control == _G.CONTROL_SECONDARY and down and jump_ready then
+                    jump_ready = false
+                    
+                    -- 跳跃效果
+                    local jump_height = 5
+                    local jump_time = 1
+                    local start_time = _G.GetTime()
+                    local start_pos = player:GetPosition()
+                    
+                    player:StartThread(function()
+                        while _G.GetTime() - start_time < jump_time do
+                            local t = (_G.GetTime() - start_time) / jump_time
+                            local height = math.sin(t * math.pi) * jump_height
+                            
+                            local curr_pos = player:GetPosition()
+                            player.Transform:SetPosition(curr_pos.x, height, curr_pos.z)
+                            
+                            _G.Sleep(_G.FRAMES)
+                        end
+                        
+                        -- 确保回到地面
+                        local x, _, z = player.Transform:GetWorldPosition()
+                        player.Transform:SetPosition(x, 0, z)
+                        
+                        -- 跳跃冷却
+                        player:DoTaskInTime(0.5, function() 
+                            jump_ready = true 
+                        end)
+                    end)
+                end
+            end
+            
+            if player.components.talker then
+                player.components.talker:Say("我感觉我能跳到天上去！试试按下右键！")
+            end
+            
+            return function()
+                if player:IsValid() then
+                    player.OnControl = old_oncontrol
+                end
+                DebugLog(3, "清理超级跳跃效果")
+            end
+        end
+    },
+    {
+        name = "神奇种子",
+        description = "你走过的地方有机会长出各种植物和资源！",
+        fn = function(player)
+            local growables = {"flower", "grass", "sapling", "berrybush", "rock1", "flint"}
+            
+            local grow_task = player:DoPeriodicTask(2, function()
+                if player:IsValid() and player:HasTag("moving") then
+                    if math.random() < 0.2 then
+                        local x, y, z = player.Transform:GetWorldPosition()
+                        local offset = 2
+                        local growth_x = x + math.random(-offset, offset)
+                        local growth_z = z + math.random(-offset, offset)
+                        
+                        local prefab = growables[math.random(#growables)]
+                        local growth = SpawnPrefab(prefab)
+                        if growth then
+                            growth.Transform:SetPosition(growth_x, 0, growth_z)
+                            
+                            -- 添加生长效果
+                            local fx = SpawnPrefab("splash_ocean")
+                            if fx then
+                                fx.Transform:SetPosition(growth_x, 0.5, growth_z)
+                                fx:DoTaskInTime(1, function() fx:Remove() end)
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if grow_task then
+                    grow_task:Cancel()
+                end
+                DebugLog(3, "清理神奇种子效果")
+            end
+        end
+    },
+    {
+        name = "材料加倍",
+        description = "采集资源时有50%几率获得双倍材料！",
+        fn = function(player)
+            local old_harvest = ACTIONS.HARVEST.fn
+            ACTIONS.HARVEST.fn = function(act)
+                local result = old_harvest(act)
+                
+                if act.doer == player and act.target and act.target.components.pickable and math.random() < 0.5 then
+                    -- 尝试再次收获
+                    local product = act.target.components.pickable.product
+                    if product then
+                        local item = SpawnPrefab(product)
+                        if item then
+                            if item.components.stackable then
+                                item.components.stackable:SetStackSize(act.target.components.pickable.numtoharvest or 1)
+                            end
+                            player.components.inventory:GiveItem(item)
+                            
+                            if player.components.talker then
+                                player.components.talker:Say("额外收获！")
+                            end
+                        end
+                    end
+                end
+                
+                return result
+            end
+            
+            local old_pick = ACTIONS.PICK.fn
+            ACTIONS.PICK.fn = function(act)
+                local result = old_pick(act)
+                
+                if act.doer == player and act.target and act.target.components.pickable and math.random() < 0.5 then
+                    -- 尝试再次采集
+                    local product = act.target.components.pickable.product
+                    if product then
+                        local item = SpawnPrefab(product)
+                        if item then
+                            if item.components.stackable then
+                                item.components.stackable:SetStackSize(act.target.components.pickable.numtoharvest or 1)
+                            end
+                            player.components.inventory:GiveItem(item)
+                            
+                            if player.components.talker then
+                                player.components.talker:Say("收获加倍！")
+                            end
+                        end
+                    end
+                end
+                
+                return result
+            end
+            
+            return function()
+                ACTIONS.HARVEST.fn = old_harvest
+                ACTIONS.PICK.fn = old_pick
+                DebugLog(3, "清理材料加倍效果")
+            end
+        end
+    },
+    {
+        name = "动物语言",
+        description = "你获得了和动物交流的能力，小动物不再害怕你！",
+        fn = function(player)
+            player:AddTag("animal_friend")
+            
+            -- 动物看到玩家不再害怕
+            local old_IsScaredOfCreature = _G.IsScaredOfCreature
+            _G.IsScaredOfCreature = function(creature, target)
+                if target == player then
+                    return false
+                end
+                return old_IsScaredOfCreature(creature, target)
+            end
+            
+            -- 随机显示动物对话
+            local animal_phrases = {
+                "你好，人类朋友！",
+                "今天天气真好啊！",
+                "你能听懂我说话？太神奇了！",
+                "我一直在找好吃的，你有吗？",
+                "这片森林是我的家，你也住在这里吗？",
+                "小心那些怪物，它们很危险！"
+            }
+            
+            local chat_task = player:DoPeriodicTask(30, function()
+                if player:IsValid() then
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    local animals = TheSim:FindEntities(x, y, z, 10, nil, {"player", "monster"}, {"animal", "rabbit", "bird"})
+                    
+                    if #animals > 0 then
+                        local animal = animals[math.random(#animals)]
+                        if animal and animal:IsValid() then
+                            local phrase = animal_phrases[math.random(#animal_phrases)]
+                            
+                            local speech = SpawnPrefab("speech_bubble_saying")
+                            if speech then
+                                speech.Transform:SetPosition(animal.Transform:GetWorldPosition())
+                                speech:SetUp(phrase)
+                                speech:DoTaskInTime(2.5, speech.Kill)
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if player:IsValid() then
+                    player:RemoveTag("animal_friend")
+                end
+                _G.IsScaredOfCreature = old_IsScaredOfCreature
+                if chat_task then
+                    chat_task:Cancel()
+                end
+                DebugLog(3, "清理动物语言效果")
+            end
+        end
+    },
+    {
+        name = "瞬移能力",
+        description = "双击方向键可以向该方向瞬移一段距离！",
+        fn = function(player)
+            -- 瞬移能力
+            local last_click_time = 0
+            local last_click_dir = nil
+            local teleport_distance = 8
+            local teleport_cooldown = 3
+            local last_teleport_time = 0
+            
+            local old_locomotor_update = player.components.locomotor.OnUpdate
+            player.components.locomotor.OnUpdate = function(self, dt, ...)
+                if old_locomotor_update then
+                    old_locomotor_update(self, dt, ...)
+                end
+                
+                local curr_time = _G.GetTime()
+                
+                -- 检测双击
+                local curr_dir = nil
+                if self:WantsToMoveForward() then curr_dir = "forward"
+                elseif self:WantsToMoveLeft() then curr_dir = "left"
+                elseif self:WantsToMoveRight() then curr_dir = "right"
+                elseif self:WantsToMoveBack() then curr_dir = "back"
+                end
+                
+                if curr_dir then
+                    if curr_dir == last_click_dir and (curr_time - last_click_time) < 0.3 and (curr_time - last_teleport_time) > teleport_cooldown then
+                        -- 执行瞬移
+                        local x, y, z = player.Transform:GetWorldPosition()
+                        local angle = nil
+                        
+                        if curr_dir == "forward" then angle = 0
+                        elseif curr_dir == "right" then angle = -90
+                        elseif curr_dir == "back" then angle = 180
+                        elseif curr_dir == "left" then angle = 90
+                        end
+                        
+                        if angle then
+                            angle = angle * DEGREES
+                            local facing_angle = player.Transform:GetRotation() * DEGREES
+                            local final_angle = facing_angle + angle
+                            
+                            local new_x = x + teleport_distance * math.cos(final_angle)
+                            local new_z = z - teleport_distance * math.sin(final_angle)
+                            
+                            -- 瞬移特效
+                            local fx1 = SpawnPrefab("statue_transition")
+                            if fx1 then
+                                fx1.Transform:SetPosition(x, y, z)
+                                fx1:DoTaskInTime(1.5, function() fx1:Remove() end)
+                            end
+                            
+                            -- 执行瞬移
+                            player.Physics:Teleport(new_x, 0, new_z)
+                            
+                            -- 瞬移后特效
+                            local fx2 = SpawnPrefab("statue_transition")
+                            if fx2 then
+                                fx2.Transform:SetPosition(new_x, y, new_z)
+                                fx2:DoTaskInTime(1.5, function() fx2:Remove() end)
+                            end
+                            
+                            last_teleport_time = curr_time
+                            
+                            if player.components.talker then
+                                player.components.talker:Say("瞬移！")
+                            end
+                        end
+                    end
+                    
+                    last_click_time = curr_time
+                    last_click_dir = curr_dir
+                end
+            end
+            
+            if player.components.talker then
+                player.components.talker:Say("试试快速双击方向键瞬移！")
+            end
+            
+            return function()
+                if player:IsValid() and player.components.locomotor then
+                    player.components.locomotor.OnUpdate = old_locomotor_update
+                end
+                DebugLog(3, "清理瞬移能力效果")
+            end
+        end
+    }
+}
+
+-- 将新的BUFF添加到原有列表
+for _, buff in ipairs(NEW_BUFF_LIST) do
+    table.insert(BUFF_LIST, buff)
+end
+
+-- 新增DEBUFF效果
+local NEW_DEBUFF_LIST = {
+    {
+        name = "食物变质",
+        description = "你的背包中的食物会加速腐烂，新获得的食物也会部分变质！",
+        fn = function(player)
+            -- 定期使背包中的食物腐烂
+            local spoil_task = player:DoPeriodicTask(30, function()
+                if player:IsValid() and player.components.inventory then
+                    local items = player.components.inventory:GetItems()
+                    for _, item in pairs(items) do
+                        if item and item.components.perishable then
+                            local current = item.components.perishable:GetPercent()
+                            item.components.perishable:SetPercent(current * 0.7) -- 加速腐烂30%
+                        end
+                    end
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("我的食物好像在加速腐烂...")
+                    end
+                end
+            end)
+            
+            -- 新获得的食物部分变质
+            local old_give = player.components.inventory.GiveItem
+            player.components.inventory.GiveItem = function(self, item, ...)
+                if item and item.components.perishable then
+                    local current = item.components.perishable:GetPercent()
+                    item.components.perishable:SetPercent(current * 0.5) -- 新食物直接腐烂一半
+                end
+                return old_give(self, item, ...)
+            end
+            
+            return function()
+                if spoil_task then
+                    spoil_task:Cancel()
+                end
+                if player:IsValid() and player.components.inventory then
+                    player.components.inventory.GiveItem = old_give
+                end
+                DebugLog(3, "清理食物变质效果")
+            end
+        end
+    },
+    {
+        name = "物品闹鬼",
+        description = "你的物品会突然移动位置，有时甚至会自己使用！",
+        fn = function(player)
+            -- 定期随机交换背包中的物品位置
+            local swap_task = player:DoPeriodicTask(60, function()
+                if player:IsValid() and player.components.inventory then
+                    local items = player.components.inventory:GetItems()
+                    if #items >= 2 then
+                        local idx1 = math.random(#items)
+                        local idx2 = idx1
+                        while idx2 == idx1 do
+                            idx2 = math.random(#items)
+                        end
+                        
+                        local item1 = items[idx1]
+                        local item2 = items[idx2]
+                        
+                        -- 交换位置
+                        local slot1 = player.components.inventory:GetItemSlot(item1)
+                        local slot2 = player.components.inventory:GetItemSlot(item2)
+                        
+                        player.components.inventory:RemoveItem(item1)
+                        player.components.inventory:RemoveItem(item2)
+                        
+                        player.components.inventory:GiveItem(item1, slot2)
+                        player.components.inventory:GiveItem(item2, slot1)
+                        
+                        if player.components.talker then
+                            player.components.talker:Say("我的物品在自己移动位置！")
+                        end
+                    end
+                end
+            end)
+            
+            -- 随机自动使用物品
+            local use_task = player:DoPeriodicTask(120, function()
+                if player:IsValid() and player.components.inventory and math.random() < 0.3 then
+                    local items = player.components.inventory:GetItems()
+                    if #items > 0 then
+                        local item = items[math.random(#items)]
+                        if item and item.components.useitem then
+                            item.components.useitem:StartUsingItem()
+                            
+                            if player.components.talker then
+                                player.components.talker:Say("我的" .. (STRINGS.NAMES[string.upper(item.prefab)] or "物品") .. "自己启动了！")
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if swap_task then
+                    swap_task:Cancel()
+                end
+                if use_task then
+                    use_task:Cancel()
+                end
+                DebugLog(3, "清理物品闹鬼效果")
+            end
+        end
+    },
+    {
+        name = "昼夜倒置",
+        description = "你的昼夜感知完全倒置，白天变成黑夜，黑夜变成白天！",
+        fn = function(player)
+            -- 添加噩梦滤镜
+            if player.components.playervision then
+                player.components.playervision:SetCustomCCTable({
+                    day = {brightness = -0.1, contrast = 0.8, saturation = 0.5},
+                    dusk = {brightness = 0, contrast = 1, saturation = 0.8},
+                    night = {brightness = 0.1, contrast = 1.2, saturation = 1.2}
+                })
+            end
+            
+            -- 改变玩家的夜视能力
+            local old_nightvision = player.components.vision and player.components.vision.nightvision or 0
+            if player.components.vision then
+                player.components.vision.nightvision = 1 - old_nightvision
+            end
+            
+            -- 如果是怪物，在白天会被追踪，晚上则安全
+            if player.components.sanity then
+                local old_night_drain = player.components.sanity.night_drain_mult
+                local old_day_gain = player.components.sanity.day_gain_mult
+                
+                player.components.sanity.night_drain_mult = -old_night_drain
+                player.components.sanity.day_gain_mult = -old_day_gain
+            end
+            
+            return function()
+                if player:IsValid() then
+                    if player.components.playervision then
+                        player.components.playervision:SetCustomCCTable(nil)
+                    end
+                    if player.components.vision then
+                        player.components.vision.nightvision = old_nightvision
+                    end
+                    if player.components.sanity then
+                        player.components.sanity.night_drain_mult = old_night_drain
+                        player.components.sanity.day_gain_mult = old_day_gain
+                    end
+                end
+                DebugLog(3, "清理昼夜倒置效果")
+            end
+        end
+    },
+    {
+        name = "混乱视觉",
+        description = "你的视野突然变得扭曲，看东西都变得很难！",
+        fn = function(player)
+            -- 添加扭曲滤镜
+            if player.components.playervision then
+                player.components.playervision:SetDistortionEnabled(true)
+                player.components.playervision:SetDistortion(0.5, 0.5)
+            end
+            
+            -- 随机变化扭曲程度
+            local distort_task = player:DoPeriodicTask(5, function()
+                if player:IsValid() and player.components.playervision then
+                    local distort_amount = 0.3 + math.random() * 0.4
+                    player.components.playervision:SetDistortion(distort_amount, distort_amount)
+                end
+            end)
+            
+            return function()
+                if player:IsValid() and player.components.playervision then
+                    player.components.playervision:SetDistortionEnabled(false)
+                end
+                if distort_task then
+                    distort_task:Cancel()
+                end
+                DebugLog(3, "清理混乱视觉效果")
+            end
+        end
+    },
+    {
+        name = "随机传送病",
+        description = "你会随机传送到世界各地，没有任何征兆！",
+        fn = function(player)
+            -- 随机传送
+            local teleport_task = player:DoPeriodicTask(60, function()
+                if player:IsValid() and math.random() < 0.4 then
+                    local curr_x, curr_y, curr_z = player.Transform:GetWorldPosition()
+                    
+                    -- 传送距离
+                    local teleport_dist = 30 + math.random() * 30
+                    local teleport_angle = math.random() * 2 * PI
+                    
+                    local new_x = curr_x + teleport_dist * math.cos(teleport_angle)
+                    local new_z = curr_z + teleport_dist * math.sin(teleport_angle)
+                    
+                    -- 传送前特效
+                    local fx1 = SpawnPrefab("collapse_small")
+                    if fx1 then
+                        fx1.Transform:SetPosition(curr_x, curr_y, curr_z)
+                    end
+                    
+                    -- 执行传送
+                    player.Physics:Teleport(new_x, 0, new_z)
+                    
+                    -- 传送后特效
+                    local fx2 = SpawnPrefab("collapse_small")
+                    if fx2 then
+                        fx2.Transform:SetPosition(new_x, 0, new_z)
+                    end
+                    
+                    if player.components.talker then
+                        player.components.talker:Say("我怎么又在这里了？！")
+                    end
+                end
+            end)
+            
+            return function()
+                if teleport_task then
+                    teleport_task:Cancel()
+                end
+                DebugLog(3, "清理随机传送病效果")
+            end
+        end
+    }
+}
+
+-- 将新的DEBUFF添加到原有列表
+for _, debuff in ipairs(NEW_DEBUFF_LIST) do
+    table.insert(DEBUFF_LIST, debuff)
+end
+
 -- 安全地应用BUFF/DEBUFF效果
 local function SafeApplyBuff(player)
     if not player or not player.components then return end
@@ -1692,6 +2274,5 @@ AddPlayerPostInit(function(inst)
         end
     end)
 end)
-
 -- mod加载完成提示
-DebugLog(1, "mod加载完成")
+DebugLog(1, "mod加载完成", "mod加载完成")
