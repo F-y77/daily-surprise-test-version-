@@ -1,9 +1,9 @@
-name = "每日惊喜"
-description = "每天给玩家一个随机的惊喜效果"
+name = "每日惊喜（测试版）"
+description = "每天给玩家一个随机的惊喜效果（请注意备份存档，BUG很多。）"
 author = "凌(Va6gn)"
-version = "1.2.5"
+version = "1.36" 
 
--- 游戏兼容性
+-- 游戏兼容性                               
 dst_compatible = true
 dont_starve_compatible = false
 reign_of_giants_compatible = false
