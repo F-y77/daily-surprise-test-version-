@@ -87,6 +87,7 @@ local LAST_SAVE_DAY = -1  -- 记录最后保存的天数
 -- BUFF效果列表定义
 local BUFF_LIST = {
     {
+        id = "BUFF_001",
         name = "超级速度",
         description = "你感觉浑身充满了力量，移动速度提升了100%！",
         fn = function(player)
@@ -101,6 +102,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_002",
         name = "巨人化",
         description = "你变成了一个巨人，体型增大了50%！",
         fn = function(player)
@@ -116,6 +118,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_003",
         name = "饥饿加速",
         description = "你的新陈代谢变快了，饥饿速度增加了100%！",
         fn = function(player)
@@ -132,6 +135,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_004",
         name = "幸运日",
         description = "今天运气特别好，击杀生物有50%几率获得双倍掉落！",
         fn = function(player)
@@ -156,6 +160,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_005",
         name = "夜视能力",
         description = "你获得了在黑暗中视物的能力，夜晚也能看得一清二楚！",
         fn = function(player)
@@ -172,6 +177,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_006",
         name = "饥饿减缓",
         description = "你的新陈代谢变慢了，饥饿速度降低了50%！",
         fn = function(player)
@@ -188,6 +194,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_007",
         name = "随机传送",
         description = "空间在你周围不稳定，每隔一段时间有30%几率随机传送！",
         fn = function(player)
@@ -213,6 +220,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_008",
         name = "生物朋友",
         description = "野生生物似乎对你产生了好感，不会主动攻击你！",
         fn = function(player)
@@ -226,6 +234,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_009",
         name = "小矮人",
         description = "你变得非常小，体型缩小到原来的60%！",
         fn = function(player)
@@ -240,6 +249,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_010",
         name = "彩虹光环",
         description = "你的周围出现了美丽的彩虹光环，不断变换着颜色！",
         fn = function(player)
@@ -276,6 +286,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_011",
         name = "元素亲和",
         description = "你获得了对温度的抗性，不容易过热或者过冷！",
         fn = function(player)
@@ -296,6 +307,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_012",
         name = "光合作用",
         description = "阳光照射在你身上会恢复生命值和饥饿值，就像植物一样！",
         fn = function(player)
@@ -316,6 +328,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_013",
         name = "幸运垂钓",
         description = "钓鱼时总能钓到双倍的收获！",
         fn = function(player)
@@ -345,6 +358,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_014",
         name = "星之祝福",
         description = "一颗明亮的星星在你头顶闪耀，照亮你的道路！",
         fn = function(player)
@@ -364,6 +378,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_015",
         name = "资源探测器",
         description = "你能感知到附近的资源位置，它们会发出微弱的光芒！",
         fn = function(player)
@@ -407,6 +422,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_016",
         name = "食物保鲜",
         description = "你随身携带的食物永远保持新鲜！",
         fn = function(player)
@@ -442,6 +458,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_017",
         name = "宠物召唤师",
         description = "一只可爱的小动物会一直跟随着你！",
         fn = function(player)
@@ -499,6 +516,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_018",
         name = "蜜蜂朋友",
         description = "友好的蜜蜂会跟随你，并定期为你产出蜂蜜！",
         fn = function(player)
@@ -583,6 +601,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_019",
         name = "植物掌控",
         description = "你能加速植物生长，走过的地方还会开出鲜花！",
         fn = function(player)
@@ -641,6 +660,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_020",
         name = "元素掌控",
         description = "你的攻击会随机附带火焰、冰霜或闪电效果！",
         fn = function(player)
@@ -688,6 +708,7 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_021",
         name = "影分身",
         description = "一个影子分身，只会跟着你白给。",
         fn = function(player)
@@ -750,7 +771,9 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_022",
         name = "宝藏探测",
+        description = "每隔一段时间在玩家附近生成一个宝藏",
         fn = function(player)
             -- 每隔一段时间在玩家附近生成一个宝藏
             local treasure_task = player:DoPeriodicTask(240, function()
@@ -788,7 +811,9 @@ local BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_023",
         name = "火焰之友",
+        description = "免疫火焰伤害，走路时留下火焰痕迹",
         fn = function(player)
             -- 免疫火焰伤害
             player:AddTag("fireimmune")
@@ -820,701 +845,8 @@ local BUFF_LIST = {
             end
         end
     },
-}
-
--- DEBUFF效果列表定义 (负面效果)
-local DEBUFF_LIST = {
     {
-        name = "蜗牛速度",
-        description = "你感觉浑身无力，移动速度降低了50%...",
-        fn = function(player)
-            player.components.locomotor:SetExternalSpeedMultiplier(player, "speedebuff", 0.5)
-            
-            return function()
-                if player:IsValid() then
-                    player.components.locomotor:RemoveExternalSpeedMultiplier(player, "speedebuff")
-                end
-            end
-        end
-    },
-    {
-        name = "虚弱无力",
-        description = "你的攻击力下降了50%，举起武器都觉得吃力...",
-        fn = function(player)
-            if player.components.combat then
-                local old_damage = player.components.combat.damagemultiplier or 1
-                player.components.combat.damagemultiplier = old_damage * 0.5
-                
-                return function()
-                    if player:IsValid() and player.components.combat then
-                        player.components.combat.damagemultiplier = old_damage
-                    end
-                end
-            end
-        end
-    },
-    {
-        name = "易碎玻璃",
-        description = "你变得异常脆弱，受到的伤害增加了30%...",
-        fn = function(player)
-            if player.components.health then
-                local old_absorb = player.components.health.absorb or 0
-                player.components.health.absorb = math.max(0, old_absorb - 0.3)
-                
-                return function()
-                    if player:IsValid() and player.components.health then
-                        player.components.health.absorb = old_absorb
-                    end
-                end
-            end
-        end
-    },
-    {
-        name = "噩梦缠身",
-        description = "可怕的噩梦折磨着你，每分钟降低10点理智值...",
-        fn = function(player)
-            if player.components.sanity then
-                local task = player:DoPeriodicTask(60, function()
-                    if player:IsValid() and player.components.sanity then
-                        player.components.sanity:DoDelta(-10)
-                        if player.components.talker then
-                            player.components.talker:Say("我感觉不太好...")
-                        end
-                    end
-                end)
-                
-                return function()
-                    if task then task:Cancel() end
-                end
-            end
-        end
-    },
-    {
-        name = "饥肠辘辘",
-        description = "你的饥饿速度增加了3倍，总是感觉饿得快...",
-        fn = function(player)
-            if player.components.hunger then
-                local old_rate = player.components.hunger.hungerrate
-                player.components.hunger.hungerrate = old_rate * 3
-                
-                return function()
-                    if player:IsValid() and player.components.hunger then
-                        player.components.hunger.hungerrate = old_rate
-                    end
-                end
-            end
-        end
-    },
-    {
-        name = "体温失调",
-        description = "你的体温调节系统出现问题，冬天更冷夏天更热...",
-        fn = function(player)
-            if player.components.temperature then
-                local old_GetTemp = player.components.temperature.GetTemp
-                player.components.temperature.GetTemp = function(self)
-                    local temp = old_GetTemp(self)
-                    if _G.TheWorld and _G.TheWorld.state then
-                        if _G.TheWorld.state.iswinter then
-                            return temp + 10
-                        elseif _G.TheWorld.state.issummer then
-                            return temp - 10
-                        end
-                    end
-                    return temp
-                end
-                
-                return function()
-                    if player:IsValid() and player.components.temperature then
-                        player.components.temperature.GetTemp = old_GetTemp
-                    end
-                end
-            end
-        end
-    },
-    {
-        name = "黑暗恐惧",
-        description = "黑暗变得更加可怕，夜晚的视野受到了严重影响...",
-        fn = function(player)
-            if player.components.playervision then
-                player.components.playervision:SetCustomCCTable({day = 0, dusk = 0, night = 0.7})
-                
-                return function()
-                    if player:IsValid() and player.components.playervision then
-                        player.components.playervision:SetCustomCCTable(nil)
-                    end
-                end
-            end
-        end
-    },
-    {
-        name = "笨手笨脚",
-        description = "你变得不太灵活，砍树、挖矿等动作的效率降低了50%...",
-        fn = function(player)
-            if player.components.workmultiplier then
-                player.components.workmultiplier:AddMultiplier(_G.ACTIONS.MINE, 0.5)
-                player.components.workmultiplier:AddMultiplier(_G.ACTIONS.CHOP, 0.5)
-                player.components.workmultiplier:AddMultiplier(_G.ACTIONS.HAMMER, 0.5)
-                
-                return function()
-                    if player:IsValid() and player.components.workmultiplier then
-                        player.components.workmultiplier:RemoveMultiplier(_G.ACTIONS.MINE)
-                        player.components.workmultiplier:RemoveMultiplier(_G.ACTIONS.CHOP)
-                        player.components.workmultiplier:RemoveMultiplier(_G.ACTIONS.HAMMER)
-                    end
-                end
-            end
-        end
-    },
-    {
-        name = "倒霉蛋",
-        description = "你今天特别倒霉，击杀生物有50%几率不掉落物品...",
-        fn = function(player)
-            local old_onkilledother = player.OnKilledOther
-            player.OnKilledOther = function(inst, data)
-                if old_onkilledother then
-                    old_onkilledother(inst, data)
-                end
-                
-                if data and data.victim and data.victim.components.lootdropper then
-                    if _G.math.random() < 0.5 then
-                        data.victim.components.lootdropper.loot = {}
-                    end
-                end
-            end
-            
-            return function()
-                if player:IsValid() then
-                    player.OnKilledOther = old_onkilledother
-                end
-            end
-        end
-    },
-    {
-        name = "噪音制造者",
-        description = "你总是不自觉地发出噪音，会吸引敌对生物靠近...",
-        fn = function(player)
-            local task = player:DoPeriodicTask(120, function()
-                if player:IsValid() then
-                    local x, y, z = player.Transform:GetWorldPosition()
-                    player.components.talker:Say("我感觉有东西在靠近...")
-                    
-                    local monsters = {"hound", "spider", "killerbee"}
-                    local monster = monsters[_G.math.random(#monsters)]
-                    local count = _G.math.random(2, 4)
-                    
-                    for i = 1, count do
-                        local angle = _G.math.random() * 2 * _G.math.pi
-                        local dist = _G.math.random(10, 15)
-                        local spawn_x = x + dist * _G.math.cos(angle)
-                        local spawn_z = z + dist * _G.math.sin(angle)
-                        
-                        local monster_inst = _G.SpawnPrefab(monster)
-                        if monster_inst then
-                            monster_inst.Transform:SetPosition(spawn_x, 0, spawn_z)
-                            if monster_inst.components.combat then
-                                monster_inst.components.combat:SetTarget(player)
-                            end
-                        end
-                    end
-                end
-            end)
-            
-            return function()
-                if task then task:Cancel() end
-            end
-        end
-    },
-    {
-        name = "方向混乱",
-        description = "你的方向感完全紊乱，移动方向会变得相反...",
-        fn = function(player)
-            if not player.components.locomotor then return end
-            
-            -- 保存原始控制函数
-            local old_GetControlMods = player.components.locomotor.GetControlMods
-            player.components.locomotor.GetControlMods = function(self)
-                local forward, sideways = old_GetControlMods(self)
-                -- 反转移动方向
-                return -forward, -sideways
-            end
-            
-            -- 返回清理函数
-            return function()
-                if player:IsValid() and player.components.locomotor then
-                    player.components.locomotor.GetControlMods = old_GetControlMods
-                    DebugLog(3, "清理方向混乱效果")
-                end
-            end
-        end
-    },
-    {
-        name = "物品腐蚀",
-        description = "你手中的工具会逐渐损坏，耐久度降低得更快...",
-        fn = function(player)
-            local task = player:DoPeriodicTask(60, function()
-                if player:IsValid() and player.components.inventory then
-                    local item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                    if item and item.components.finiteuses then
-                        item.components.finiteuses:Use(10)
-                    end
-                end
-            end)
-            
-            return function()
-                if task then task:Cancel() end
-            end
-        end
-    },
-    {
-        name = "幻影追击",
-        description = "可怕的暗影生物会定期出现在你周围...",
-        fn = function(player)
-            local function SpawnPhantom()
-                if not player:IsValid() then return end
-                
-                local phantom = _G.SpawnPrefab("shadowcreature")
-                if phantom then
-                    local x, y, z = player.Transform:GetWorldPosition()
-                    local angle = math.random() * 2 * _G.PI
-                    local spawn_dist = 15
-                    phantom.Transform:SetPosition(
-                        x + math.cos(angle)*spawn_dist, 
-                        0, 
-                        z + math.sin(angle)*spawn_dist
-                    )
-                    if phantom.components.combat then
-                        phantom.components.combat:SetTarget(player)
-                    end
-                end
-            end
-            
-            local task = player:DoPeriodicTask(120, SpawnPhantom)
-            
-            return function()
-                if task then 
-                    task:Cancel() 
-                    DebugLog(3, "清理幻影追击效果")
-                end
-            end
-        end
-    },
-    {
-        name = "感官失调",
-        description = "你的生命值和饥饿值会随机互换，非常混乱...",
-        fn = function(player)
-            local task = player:DoPeriodicTask(30, function()
-                if player:IsValid() then
-                    if player.components.health and player.components.hunger then
-                        local health = player.components.health.currenthealth
-                        local hunger = player.components.hunger.current
-                        player.components.health:SetCurrentHealth(hunger)
-                        player.components.hunger:SetCurrent(health)
-                    end
-                end
-            end)
-            
-            return function()
-                if task then task:Cancel() end
-            end
-        end
-    },
-    {
-        name = "物品掉落",
-        description = "你的物品总是不自觉地从背包中掉落...",
-        fn = function(player)
-            local drop_task = player:DoPeriodicTask(60, function()
-                if player:IsValid() and player.components.inventory then
-                    local items = player.components.inventory:GetItems()
-                    if #items > 0 then
-                        local item = items[math.random(#items)]
-                        if item then
-                            player.components.inventory:DropItem(item)
-                            if TheNet:GetIsServer() then
-                                TheNet:SystemMessage("玩家 " .. player.name .. " 的物品突然掉落了！")
-                            end
-                        end
-                    end
-                end
-            end)
-            
-            return function()
-                if drop_task then
-                    drop_task:Cancel()
-                    DebugLog(3, "清理物品掉落效果")
-                end
-            end
-        end
-    },
-    {
-        name = "幻影追踪",
-        fn = function(player)
-            local shadow_task = player:DoPeriodicTask(30, function()
-                if player:IsValid() then
-                    local x, y, z = player.Transform:GetWorldPosition()
-                    local shadow = SpawnPrefab("terrorbeak")
-                    
-                    if shadow then
-                        shadow.Transform:SetPosition(x + 15, 0, z + 15)
-                        shadow:DoTaskInTime(15, function() 
-                            if shadow and shadow:IsValid() then
-                                shadow:Remove() 
-                            end
-                        end)
-                        
-                        if shadow.components.combat then
-                            shadow.components.combat:SetTarget(player)
-                        end
-                    end
-                end
-            end)
-            
-            return function()
-                if shadow_task then
-                    shadow_task:Cancel()
-                    DebugLog(3, "清理幻影追踪效果")
-                end
-            end
-        end
-    },
-    {
-        name = "饥饿幻觉",
-        fn = function(player)
-            if player.components.hunger then
-                local old_GetPercent = player.components.hunger.GetPercent
-                player.components.hunger.GetPercent = function(self)
-                    return old_GetPercent(self) * 0.5
-                end
-                
-                return function()
-                    if player:IsValid() and player.components.hunger then
-                        player.components.hunger.GetPercent = old_GetPercent
-                        DebugLog(3, "清理饥饿幻觉效果")
-                    end
-                end
-            end
-            return function() end
-        end
-    },
-    {
-        name = "工具易碎",
-        fn = function(player)
-            local old_fn = nil
-            if player.components.inventory then
-                old_fn = player.components.inventory.DropItem
-                player.components.inventory.DropItem = function(self, item, ...)
-                    if item and item.components.finiteuses then
-                        local current = item.components.finiteuses:GetPercent()
-                        item.components.finiteuses:SetPercent(current * 0.8)
-                    end
-                    return old_fn(self, item, ...)
-                end
-            end
-            
-            -- 使用工具时额外消耗耐久
-            local old_use_item = ACTIONS.CHOP.fn
-            ACTIONS.CHOP.fn = function(act)
-                local result = old_use_item(act)
-                if act.doer == player and act.invobject and act.invobject.components.finiteuses then
-                    act.invobject.components.finiteuses:Use(2)
-                end
-                return result
-            end
-            
-            return function()
-                if player:IsValid() and player.components.inventory and old_fn then
-                    player.components.inventory.DropItem = old_fn
-                end
-                ACTIONS.CHOP.fn = old_use_item
-                DebugLog(3, "清理工具易碎效果")
-            end
-        end
-    },
-    {
-        name = "幽灵缠身",
-        description = "几个幽灵会一直跟随着你，降低你的理智值...",
-        fn = function(player)
-            -- 定期生成幽灵跟随玩家
-            local ghosts = {}
-            local max_ghosts = 3
-            
-            local ghost_task = player:DoPeriodicTask(60, function()
-                if player:IsValid() and #ghosts < max_ghosts then
-                    local x, y, z = player.Transform:GetWorldPosition()
-                    local ghost = SpawnPrefab("ghost")
-                    
-                    if ghost then
-                        -- 设置位置
-                        local angle = math.random() * 2 * PI
-                        local radius = 5
-                        ghost.Transform:SetPosition(
-                            x + radius * math.cos(angle),
-                            0,
-                            z + radius * math.sin(angle)
-                        )
-                        
-                        -- 让幽灵跟随玩家
-                        local follow_task = ghost:DoPeriodicTask(1, function()
-                            if player:IsValid() and ghost:IsValid() then
-                                local px, py, pz = player.Transform:GetWorldPosition()
-                                local gx, gy, gz = ghost.Transform:GetWorldPosition()
-                                local dist = math.sqrt((px-gx)^2 + (pz-gz)^2)
-                                
-                                if dist > 15 then
-                                    -- 瞬移到玩家附近
-                                    local angle = math.random() * 2 * PI
-                                    ghost.Transform:SetPosition(
-                                        px + 5 * math.cos(angle),
-                                        0,
-                                        pz + 5 * math.sin(angle)
-                                    )
-                                elseif dist > 3 then
-                                    -- 向玩家移动
-                                    if ghost.components.locomotor then
-                                        ghost.components.locomotor:GoToPoint(Vector3(px, py, pz))
-                                    end
-                                end
-                            end
-                        end)
-                        
-                        -- 降低玩家理智
-                        if player.components.sanity then
-                            player.components.sanity:DoDelta(-5)
-                        end
-                        
-                        table.insert(ghosts, {ghost = ghost, follow_task = follow_task})
-                    end
-                end
-            end)
-            
-            return function()
-                for _, ghost_data in ipairs(ghosts) do
-                    if ghost_data.follow_task then
-                        ghost_data.follow_task:Cancel()
-                    end
-                    if ghost_data.ghost and ghost_data.ghost:IsValid() then
-                        ghost_data.ghost:Remove()
-                    end
-                end
-                if ghost_task then
-                    ghost_task:Cancel()
-                end
-                DebugLog(3, "清理幽灵缠身效果")
-            end
-        end
-    },
-    {
-        name = "时间错乱",
-        description = "你周围的时间流速变得不稳定，白天和黑夜的长度会随机变化...",
-        fn = function(player)
-            -- 玩家周围的时间流速不稳定
-            local time_task = player:DoPeriodicTask(30, function()
-                if player:IsValid() and _G.TheWorld then
-                    -- 随机时间效果
-                    local effect = math.random(3)
-                    
-                    if effect == 1 then
-                        -- 时间加速
-                        _G.TheWorld:PushEvent("ms_setclocksegs", {day = 8, dusk = 2, night = 2})
-                        if player.components.talker then
-                            player.components.talker:Say("时间似乎加速了！")
-                        end
-                    elseif effect == 2 then
-                        -- 时间减慢
-                        _G.TheWorld:PushEvent("ms_setclocksegs", {day = 4, dusk = 6, night = 6})
-                        if player.components.talker then
-                            player.components.talker:Say("时间似乎减慢了...")
-                        end
-                    else
-                        -- 恢复正常
-                        _G.TheWorld:PushEvent("ms_setclocksegs", {day = 6, dusk = 4, night = 2})
-                        if player.components.talker then
-                            player.components.talker:Say("时间恢复正常了")
-                        end
-                    end
-                end
-            end)
-            
-            return function()
-                if time_task then
-                    time_task:Cancel()
-                end
-                -- 恢复正常时间设置
-                if _G.TheWorld then
-                    _G.TheWorld:PushEvent("ms_setclocksegs", {day = 6, dusk = 4, night = 2})
-                end
-                DebugLog(3, "清理时间错乱效果")
-            end
-        end
-    },
-    {
-        name = "噩梦入侵",
-        description = "噩梦生物会随机出现在你周围，并试图攻击你...",
-        fn = function(player)
-            -- 玩家周围会随机出现噩梦生物的幻影
-            local nightmare_task = player:DoPeriodicTask(45, function()
-                if player:IsValid() then
-                    local x, y, z = player.Transform:GetWorldPosition()
-                    
-                    -- 创建噩梦生物
-                    local nightmare_creatures = {"crawlinghorror", "terrorbeak", "nightmarebeak"}
-                    local creature = SpawnPrefab(nightmare_creatures[math.random(#nightmare_creatures)])
-                    
-                    if creature then
-                        -- 设置位置
-                        local offset = 10
-                        creature.Transform:SetPosition(
-                            x + math.random(-offset, offset),
-                            0,
-                            z + math.random(-offset, offset)
-                        )
-                        
-                        -- 设置目标
-                        if creature.components.combat then
-                            creature.components.combat:SetTarget(player)
-                        end
-                        
-                        -- 一段时间后消失
-                        creature:DoTaskInTime(20, function()
-                            if creature and creature:IsValid() then
-                                local fx = SpawnPrefab("shadow_despawn")
-                                if fx then
-                                    local cx, cy, cz = creature.Transform:GetWorldPosition()
-                                    fx.Transform:SetPosition(cx, cy, cz)
-                                end
-                                creature:Remove()
-                            end
-                        end)
-                        
-                        -- 降低玩家理智
-                        if player.components.sanity then
-                            player.components.sanity:DoDelta(-10)
-                        end
-                        
-                        if player.components.talker then
-                            player.components.talker:Say("噩梦正在入侵现实！")
-                        end
-                    end
-                end
-            end)
-            
-            return function()
-                if nightmare_task then
-                    nightmare_task:Cancel()
-                end
-                DebugLog(3, "清理噩梦入侵效果")
-            end
-        end
-    },
-    {
-        name = "失重状态",
-        description = "你时不时会失去重力，漂浮在空中，物品也容易掉落...",
-        fn = function(player)
-            -- 修改玩家的物理属性
-            local old_mass = player.Physics:GetMass()
-            player.Physics:SetMass(0.1)
-            
-            -- 随机浮空效果
-            local float_task = player:DoPeriodicTask(10, function()
-                if player:IsValid() then
-                    -- 玩家突然"浮起"
-                    if player.components.talker then
-                        player.components.talker:Say("我感觉自己要飘起来了！")
-                    end
-                    
-                    -- 创建浮空效果
-                    local float_time = 3
-                    local start_time = GetTime()
-                    local start_y = 0
-                    
-                    player:StartThread(function()
-                        while GetTime() - start_time < float_time do
-                            local t = (GetTime() - start_time) / float_time
-                            local height = math.sin(t * math.pi) * 3 -- 最高浮到3个单位高
-                            
-                            local x, _, z = player.Transform:GetWorldPosition()
-                            player.Transform:SetPosition(x, height, z)
-                            
-                            Sleep(FRAMES)
-                        end
-                        
-                        -- 回到地面
-                        local x, _, z = player.Transform:GetWorldPosition()
-                        player.Transform:SetPosition(x, 0, z)
-                    end)
-                end
-            end)
-            
-            -- 物品经常从玩家手中掉落
-            local drop_task = player:DoPeriodicTask(20, function()
-                if player:IsValid() and player.components.inventory then
-                    local equipped = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                    if equipped then
-                        player.components.inventory:DropItem(equipped)
-                        if player.components.talker then
-                            player.components.talker:Say("我抓不住东西了！")
-                        end
-                    end
-                end
-            end)
-            
-            return function()
-                if float_task then
-                    float_task:Cancel()
-                end
-                if drop_task then
-                    drop_task:Cancel()
-                end
-                if player:IsValid() and player.Physics then
-                    player.Physics:SetMass(old_mass)
-                    -- 确保玩家回到地面
-                    local x, _, z = player.Transform:GetWorldPosition()
-                    player.Transform:SetPosition(x, 0, z)
-                end
-                DebugLog(3, "清理失重状态效果")
-            end
-        end
-    },
-    {
-        name = "雷电吸引",
-        description = "你变成了移动的避雷针，经常会吸引闪电劈向你...",
-        fn = function(player)
-            -- 有几率在玩家附近落雷
-            local lightning_task = player:DoPeriodicTask(30, function()
-                if player:IsValid() and math.random() < 0.5 then
-                    local x, y, z = player.Transform:GetWorldPosition()
-                    local offset = 3
-                    local lightning_x = x + math.random(-offset, offset)
-                    local lightning_z = z + math.random(-offset, offset)
-                    
-                    -- 创建闪电
-                    local lightning = SpawnPrefab("lightning")
-                    if lightning then
-                        lightning.Transform:SetPosition(lightning_x, 0, lightning_z)
-                        
-                        -- 对玩家造成伤害
-                        if math.random() < 0.3 and player.components.health then
-                            player.components.health:DoDelta(-5)
-                            if player.components.talker then
-                                player.components.talker:Say("我好像吸引了雷电！")
-                            end
-                        end
-                    end
-                end
-            end)
-            
-            return function()
-                if lightning_task then
-                    lightning_task:Cancel()
-                    DebugLog(3, "清理雷电吸引效果")
-                end
-            end
-        end
-    },
-}
-
--- 新增BUFF效果
-local NEW_BUFF_LIST = {
-    {
+        id = "BUFF_024",
         name = "随机掉落",
         description = "你杀死的生物会掉落随机物品，有可能是稀有物品！",
         fn = function(player)
@@ -1563,6 +895,7 @@ local NEW_BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_025",
         name = "超级跳跃",
         description = "你可以跳得超级高，跳跃时会暂时离开地面！",
         fn = function(player)
@@ -1621,6 +954,7 @@ local NEW_BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_026",
         name = "神奇种子",
         description = "你走过的地方有机会长出各种植物和资源！",
         fn = function(player)
@@ -1659,6 +993,7 @@ local NEW_BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_027",
         name = "材料加倍",
         description = "采集资源时有50%几率获得双倍材料！",
         fn = function(player)
@@ -1720,6 +1055,7 @@ local NEW_BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_028",
         name = "动物语言",
         description = "你获得了和动物交流的能力，小动物不再害怕你！",
         fn = function(player)
@@ -1778,6 +1114,7 @@ local NEW_BUFF_LIST = {
         end
     },
     {
+        id = "BUFF_029",
         name = "瞬移能力",
         description = "双击方向键可以向该方向瞬移一段距离！",
         fn = function(player)
@@ -1869,13 +1206,726 @@ local NEW_BUFF_LIST = {
 }
 
 -- 将新的BUFF添加到原有列表
-for _, buff in ipairs(NEW_BUFF_LIST) do
+for _, buff in ipairs(BUFF_LIST) do
     table.insert(BUFF_LIST, buff)
 end
 
--- 新增DEBUFF效果
-local NEW_DEBUFF_LIST = {
+-- DEBUFF效果列表定义 (负面效果)
+local DEBUFF_LIST = {
     {
+        id = "DEBUFF_001",
+        name = "蜗牛速度",
+        description = "你感觉浑身无力，移动速度降低了50%...",
+        fn = function(player)
+            player.components.locomotor:SetExternalSpeedMultiplier(player, "speedebuff", 0.5)
+            
+            return function()
+                if player:IsValid() then
+                    player.components.locomotor:RemoveExternalSpeedMultiplier(player, "speedebuff")
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_002",
+        name = "虚弱无力",
+        description = "你的攻击力下降了50%，举起武器都觉得吃力...",
+        fn = function(player)
+            if player.components.combat then
+                local old_damage = player.components.combat.damagemultiplier or 1
+                player.components.combat.damagemultiplier = old_damage * 0.5
+                
+                return function()
+                    if player:IsValid() and player.components.combat then
+                        player.components.combat.damagemultiplier = old_damage
+                    end
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_003",
+        name = "易碎玻璃",
+        description = "你变得异常脆弱，受到的伤害增加了30%...",
+        fn = function(player)
+            if player.components.health then
+                local old_absorb = player.components.health.absorb or 0
+                player.components.health.absorb = math.max(0, old_absorb - 0.3)
+                
+                return function()
+                    if player:IsValid() and player.components.health then
+                        player.components.health.absorb = old_absorb
+                    end
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_004",
+        name = "噩梦缠身",
+        description = "可怕的噩梦折磨着你，每分钟降低10点理智值...",
+        fn = function(player)
+            if player.components.sanity then
+                local task = player:DoPeriodicTask(60, function()
+                    if player:IsValid() and player.components.sanity then
+                        player.components.sanity:DoDelta(-10)
+                        if player.components.talker then
+                            player.components.talker:Say("我感觉不太好...")
+                        end
+                    end
+                end)
+                
+                return function()
+                    if task then task:Cancel() end
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_005",
+        name = "饥肠辘辘",
+        description = "你的饥饿速度增加了3倍，总是感觉饿得快...",
+        fn = function(player)
+            if player.components.hunger then
+                local old_rate = player.components.hunger.hungerrate
+                player.components.hunger.hungerrate = old_rate * 3
+                
+                return function()
+                    if player:IsValid() and player.components.hunger then
+                        player.components.hunger.hungerrate = old_rate
+                    end
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_006",
+        name = "体温失调",
+        description = "你的体温调节系统出现问题，冬天更冷夏天更热...",
+        fn = function(player)
+            if player.components.temperature then
+                local old_GetTemp = player.components.temperature.GetTemp
+                player.components.temperature.GetTemp = function(self)
+                    local temp = old_GetTemp(self)
+                    if _G.TheWorld and _G.TheWorld.state then
+                        if _G.TheWorld.state.iswinter then
+                            return temp + 10
+                        elseif _G.TheWorld.state.issummer then
+                            return temp - 10
+                        end
+                    end
+                    return temp
+                end
+                
+                return function()
+                    if player:IsValid() and player.components.temperature then
+                        player.components.temperature.GetTemp = old_GetTemp
+                    end
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_007",
+        name = "黑暗恐惧",
+        description = "黑暗变得更加可怕，夜晚的视野受到了严重影响...",
+        fn = function(player)
+            if player.components.playervision then
+                player.components.playervision:SetCustomCCTable({day = 0, dusk = 0, night = 0.7})
+                
+                return function()
+                    if player:IsValid() and player.components.playervision then
+                        player.components.playervision:SetCustomCCTable(nil)
+                    end
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_008",
+        name = "笨手笨脚",
+        description = "你变得不太灵活，砍树、挖矿等动作的效率降低了50%...",
+        fn = function(player)
+            if player.components.workmultiplier then
+                player.components.workmultiplier:AddMultiplier(_G.ACTIONS.MINE, 0.5)
+                player.components.workmultiplier:AddMultiplier(_G.ACTIONS.CHOP, 0.5)
+                player.components.workmultiplier:AddMultiplier(_G.ACTIONS.HAMMER, 0.5)
+                
+                return function()
+                    if player:IsValid() and player.components.workmultiplier then
+                        player.components.workmultiplier:RemoveMultiplier(_G.ACTIONS.MINE)
+                        player.components.workmultiplier:RemoveMultiplier(_G.ACTIONS.CHOP)
+                        player.components.workmultiplier:RemoveMultiplier(_G.ACTIONS.HAMMER)
+                    end
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_009",
+        name = "倒霉蛋",
+        description = "你今天特别倒霉，击杀生物有50%几率不掉落物品...",
+        fn = function(player)
+            local old_onkilledother = player.OnKilledOther
+            player.OnKilledOther = function(inst, data)
+                if old_onkilledother then
+                    old_onkilledother(inst, data)
+                end
+                
+                if data and data.victim and data.victim.components.lootdropper then
+                    if _G.math.random() < 0.5 then
+                        data.victim.components.lootdropper.loot = {}
+                    end
+                end
+            end
+            
+            return function()
+                if player:IsValid() then
+                    player.OnKilledOther = old_onkilledother
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_010",
+        name = "噪音制造者",
+        description = "你总是不自觉地发出噪音，会吸引敌对生物靠近...",
+        fn = function(player)
+            local task = player:DoPeriodicTask(120, function()
+                if player:IsValid() then
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    player.components.talker:Say("我感觉有东西在靠近...")
+                    
+                    local monsters = {"hound", "spider", "killerbee"}
+                    local monster = monsters[_G.math.random(#monsters)]
+                    local count = _G.math.random(2, 4)
+                    
+                    for i = 1, count do
+                        local angle = _G.math.random() * 2 * _G.math.pi
+                        local dist = _G.math.random(10, 15)
+                        local spawn_x = x + dist * _G.math.cos(angle)
+                        local spawn_z = z + dist * _G.math.sin(angle)
+                        
+                        local monster_inst = _G.SpawnPrefab(monster)
+                        if monster_inst then
+                            monster_inst.Transform:SetPosition(spawn_x, 0, spawn_z)
+                            if monster_inst.components.combat then
+                                monster_inst.components.combat:SetTarget(player)
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if task then task:Cancel() end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_011",
+        name = "方向混乱",
+        description = "你的方向感完全紊乱，移动方向会变得相反...",
+        fn = function(player)
+            if not player.components.locomotor then return end
+            
+            -- 保存原始控制函数
+            local old_GetControlMods = player.components.locomotor.GetControlMods
+            player.components.locomotor.GetControlMods = function(self)
+                local forward, sideways = old_GetControlMods(self)
+                -- 反转移动方向
+                return -forward, -sideways
+            end
+            
+            -- 返回清理函数
+            return function()
+                if player:IsValid() and player.components.locomotor then
+                    player.components.locomotor.GetControlMods = old_GetControlMods
+                    DebugLog(3, "清理方向混乱效果")
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_012",
+        name = "物品腐蚀",
+        description = "你手中的工具会逐渐损坏，耐久度降低得更快...",
+        fn = function(player)
+            local task = player:DoPeriodicTask(60, function()
+                if player:IsValid() and player.components.inventory then
+                    local item = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                    if item and item.components.finiteuses then
+                        item.components.finiteuses:Use(10)
+                    end
+                end
+            end)
+            
+            return function()
+                if task then task:Cancel() end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_013",
+        name = "幻影追击",
+        description = "可怕的暗影生物会定期出现在你周围...",
+        fn = function(player)
+            local function SpawnPhantom()
+                if not player:IsValid() then return end
+                
+                local phantom = _G.SpawnPrefab("shadowcreature")
+                if phantom then
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    local angle = math.random() * 2 * _G.PI
+                    local spawn_dist = 15
+                    phantom.Transform:SetPosition(
+                        x + math.cos(angle)*spawn_dist, 
+                        0, 
+                        z + math.sin(angle)*spawn_dist
+                    )
+                    if phantom.components.combat then
+                        phantom.components.combat:SetTarget(player)
+                    end
+                end
+            end
+            
+            local task = player:DoPeriodicTask(120, SpawnPhantom)
+            
+            return function()
+                if task then 
+                    task:Cancel() 
+                    DebugLog(3, "清理幻影追击效果")
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_014",
+        name = "感官失调",
+        description = "你的生命值和饥饿值会随机互换，非常混乱...",
+        fn = function(player)
+            local task = player:DoPeriodicTask(30, function()
+                if player:IsValid() then
+                    if player.components.health and player.components.hunger then
+                        local health = player.components.health.currenthealth
+                        local hunger = player.components.hunger.current
+                        player.components.health:SetCurrentHealth(hunger)
+                        player.components.hunger:SetCurrent(health)
+                    end
+                end
+            end)
+            
+            return function()
+                if task then task:Cancel() end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_015",
+        name = "物品掉落",
+        description = "你的物品总是不自觉地从背包中掉落...",
+        fn = function(player)
+            local drop_task = player:DoPeriodicTask(60, function()
+                if player:IsValid() and player.components.inventory then
+                    local items = player.components.inventory:GetItems()
+                    if #items > 0 then
+                        local item = items[math.random(#items)]
+                        if item then
+                            player.components.inventory:DropItem(item)
+                            if TheNet:GetIsServer() then
+                                TheNet:SystemMessage("玩家 " .. player.name .. " 的物品突然掉落了！")
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if drop_task then
+                    drop_task:Cancel()
+                    DebugLog(3, "清理物品掉落效果")
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_016",
+        name = "幻影追踪",
+        description = "可怕的幻影会追踪你",
+        fn = function(player)
+            local shadow_task = player:DoPeriodicTask(30, function()
+                if player:IsValid() then
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    local shadow = SpawnPrefab("terrorbeak")
+                    
+                    if shadow then
+                        shadow.Transform:SetPosition(x + 15, 0, z + 15)
+                        shadow:DoTaskInTime(15, function() 
+                            if shadow and shadow:IsValid() then
+                                shadow:Remove() 
+                            end
+                        end)
+                        
+                        if shadow.components.combat then
+                            shadow.components.combat:SetTarget(player)
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if shadow_task then
+                    shadow_task:Cancel()
+                    DebugLog(3, "清理幻影追踪效果")
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_017",
+        name = "饥饿幻觉",
+        description = "你的饥饿值显示不准确",
+        fn = function(player)
+            if player.components.hunger then
+                local old_GetPercent = player.components.hunger.GetPercent
+                player.components.hunger.GetPercent = function(self)
+                    return old_GetPercent(self) * 0.5
+                end
+                
+                return function()
+                    if player:IsValid() and player.components.hunger then
+                        player.components.hunger.GetPercent = old_GetPercent
+                        DebugLog(3, "清理饥饿幻觉效果")
+                    end
+                end
+            end
+            return function() end
+        end
+    },
+    {
+        id = "DEBUFF_018",
+        name = "工具易碎",
+        description = "你的工具更容易损坏",
+        fn = function(player)
+            local old_fn = nil
+            if player.components.inventory then
+                old_fn = player.components.inventory.DropItem
+                player.components.inventory.DropItem = function(self, item, ...)
+                    if item and item.components.finiteuses then
+                        local current = item.components.finiteuses:GetPercent()
+                        item.components.finiteuses:SetPercent(current * 0.8)
+                    end
+                    return old_fn(self, item, ...)
+                end
+            end
+            
+            -- 使用工具时额外消耗耐久
+            local old_use_item = ACTIONS.CHOP.fn
+            ACTIONS.CHOP.fn = function(act)
+                local result = old_use_item(act)
+                if act.doer == player and act.invobject and act.invobject.components.finiteuses then
+                    act.invobject.components.finiteuses:Use(2)
+                end
+                return result
+            end
+            
+            return function()
+                if player:IsValid() and player.components.inventory and old_fn then
+                    player.components.inventory.DropItem = old_fn
+                end
+                ACTIONS.CHOP.fn = old_use_item
+                DebugLog(3, "清理工具易碎效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_019",
+        name = "幽灵缠身",
+        description = "几个幽灵会一直跟随着你，降低你的理智值...",
+        fn = function(player)
+            -- 定期生成幽灵跟随玩家
+            local ghosts = {}
+            local max_ghosts = 3
+            
+            local ghost_task = player:DoPeriodicTask(60, function()
+                if player:IsValid() and #ghosts < max_ghosts then
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    local ghost = SpawnPrefab("ghost")
+                    
+                    if ghost then
+                        -- 设置位置
+                        local angle = math.random() * 2 * PI
+                        local radius = 5
+                        ghost.Transform:SetPosition(
+                            x + radius * math.cos(angle),
+                            0,
+                            z + radius * math.sin(angle)
+                        )
+                        
+                        -- 让幽灵跟随玩家
+                        local follow_task = ghost:DoPeriodicTask(1, function()
+                            if player:IsValid() and ghost:IsValid() then
+                                local px, py, pz = player.Transform:GetWorldPosition()
+                                local gx, gy, gz = ghost.Transform:GetWorldPosition()
+                                local dist = math.sqrt((px-gx)^2 + (pz-gz)^2)
+                                
+                                if dist > 15 then
+                                    -- 瞬移到玩家附近
+                                    local angle = math.random() * 2 * PI
+                                    ghost.Transform:SetPosition(
+                                        px + 5 * math.cos(angle),
+                                        0,
+                                        pz + 5 * math.sin(angle)
+                                    )
+                                elseif dist > 3 then
+                                    -- 向玩家移动
+                                    if ghost.components.locomotor then
+                                        ghost.components.locomotor:GoToPoint(Vector3(px, py, pz))
+                                    end
+                                end
+                            end
+                        end)
+                        
+                        -- 降低玩家理智
+                        if player.components.sanity then
+                            player.components.sanity:DoDelta(-5)
+                        end
+                        
+                        table.insert(ghosts, {ghost = ghost, follow_task = follow_task})
+                    end
+                end
+            end)
+            
+            return function()
+                for _, ghost_data in ipairs(ghosts) do
+                    if ghost_data.follow_task then
+                        ghost_data.follow_task:Cancel()
+                    end
+                    if ghost_data.ghost and ghost_data.ghost:IsValid() then
+                        ghost_data.ghost:Remove()
+                    end
+                end
+                if ghost_task then
+                    ghost_task:Cancel()
+                end
+                DebugLog(3, "清理幽灵缠身效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_020",
+        name = "时间错乱",
+        description = "你周围的时间流速变得不稳定，白天和黑夜的长度会随机变化...",
+        fn = function(player)
+            -- 玩家周围的时间流速不稳定
+            local time_task = player:DoPeriodicTask(30, function()
+                if player:IsValid() and _G.TheWorld then
+                    -- 随机时间效果
+                    local effect = math.random(3)
+                    
+                    if effect == 1 then
+                        -- 时间加速
+                        _G.TheWorld:PushEvent("ms_setclocksegs", {day = 8, dusk = 2, night = 2})
+                        if player.components.talker then
+                            player.components.talker:Say("时间似乎加速了！")
+                        end
+                    elseif effect == 2 then
+                        -- 时间减慢
+                        _G.TheWorld:PushEvent("ms_setclocksegs", {day = 4, dusk = 6, night = 6})
+                        if player.components.talker then
+                            player.components.talker:Say("时间似乎减慢了...")
+                        end
+                    else
+                        -- 恢复正常
+                        _G.TheWorld:PushEvent("ms_setclocksegs", {day = 6, dusk = 4, night = 2})
+                        if player.components.talker then
+                            player.components.talker:Say("时间恢复正常了")
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if time_task then
+                    time_task:Cancel()
+                end
+                -- 恢复正常时间设置
+                if _G.TheWorld then
+                    _G.TheWorld:PushEvent("ms_setclocksegs", {day = 6, dusk = 4, night = 2})
+                end
+                DebugLog(3, "清理时间错乱效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_021",
+        name = "噩梦入侵",
+        description = "噩梦生物会随机出现在你周围，并试图攻击你...",
+        fn = function(player)
+            -- 玩家周围会随机出现噩梦生物的幻影
+            local nightmare_task = player:DoPeriodicTask(45, function()
+                if player:IsValid() then
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    
+                    -- 创建噩梦生物
+                    local nightmare_creatures = {"crawlinghorror", "terrorbeak", "nightmarebeak"}
+                    local creature = SpawnPrefab(nightmare_creatures[math.random(#nightmare_creatures)])
+                    
+                    if creature then
+                        -- 设置位置
+                        local offset = 10
+                        creature.Transform:SetPosition(
+                            x + math.random(-offset, offset),
+                            0,
+                            z + math.random(-offset, offset)
+                        )
+                        
+                        -- 设置目标
+                        if creature.components.combat then
+                            creature.components.combat:SetTarget(player)
+                        end
+                        
+                        -- 一段时间后消失
+                        creature:DoTaskInTime(20, function()
+                            if creature and creature:IsValid() then
+                                local fx = SpawnPrefab("shadow_despawn")
+                                if fx then
+                                    local cx, cy, cz = creature.Transform:GetWorldPosition()
+                                    fx.Transform:SetPosition(cx, cy, cz)
+                                end
+                                creature:Remove()
+                            end
+                        end)
+                        
+                        -- 降低玩家理智
+                        if player.components.sanity then
+                            player.components.sanity:DoDelta(-10)
+                        end
+                        
+                        if player.components.talker then
+                            player.components.talker:Say("噩梦正在入侵现实！")
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if nightmare_task then
+                    nightmare_task:Cancel()
+                end
+                DebugLog(3, "清理噩梦入侵效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_022",
+        name = "失重状态",
+        description = "你时不时会失去重力，漂浮在空中，物品也容易掉落...",
+        fn = function(player)
+            -- 修改玩家的物理属性
+            local old_mass = player.Physics:GetMass()
+            player.Physics:SetMass(0.1)
+            
+            -- 随机浮空效果
+            local float_task = player:DoPeriodicTask(10, function()
+                if player:IsValid() then
+                    -- 玩家突然"浮起"
+                    if player.components.talker then
+                        player.components.talker:Say("我感觉自己要飘起来了！")
+                    end
+                    
+                    -- 创建浮空效果
+                    local float_time = 3
+                    local start_time = GetTime()
+                    local start_y = 0
+                    
+                    player:StartThread(function()
+                        while GetTime() - start_time < float_time do
+                            local t = (GetTime() - start_time) / float_time
+                            local height = math.sin(t * math.pi) * 3 -- 最高浮到3个单位高
+                            
+                            local x, _, z = player.Transform:GetWorldPosition()
+                            player.Transform:SetPosition(x, height, z)
+                            
+                            Sleep(FRAMES)
+                        end
+                        
+                        -- 回到地面
+                        local x, _, z = player.Transform:GetWorldPosition()
+                        player.Transform:SetPosition(x, 0, z)
+                    end)
+                end
+            end)
+            
+            -- 物品经常从玩家手中掉落
+            local drop_task = player:DoPeriodicTask(20, function()
+                if player:IsValid() and player.components.inventory then
+                    local equipped = player.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                    if equipped then
+                        player.components.inventory:DropItem(equipped)
+                        if player.components.talker then
+                            player.components.talker:Say("我抓不住东西了！")
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if float_task then
+                    float_task:Cancel()
+                end
+                if drop_task then
+                    drop_task:Cancel()
+                end
+                if player:IsValid() and player.Physics then
+                    player.Physics:SetMass(old_mass)
+                    -- 确保玩家回到地面
+                    local x, _, z = player.Transform:GetWorldPosition()
+                    player.Transform:SetPosition(x, 0, z)
+                end
+                DebugLog(3, "清理失重状态效果")
+            end
+        end
+    },
+    {
+        id = "DEBUFF_023",
+        name = "雷电吸引",
+        description = "你变成了移动的避雷针，经常会吸引闪电劈向你...",
+        fn = function(player)
+            -- 有几率在玩家附近落雷
+            local lightning_task = player:DoPeriodicTask(30, function()
+                if player:IsValid() and math.random() < 0.5 then
+                    local x, y, z = player.Transform:GetWorldPosition()
+                    local offset = 3
+                    local lightning_x = x + math.random(-offset, offset)
+                    local lightning_z = z + math.random(-offset, offset)
+                    
+                    -- 创建闪电
+                    local lightning = SpawnPrefab("lightning")
+                    if lightning then
+                        lightning.Transform:SetPosition(lightning_x, 0, lightning_z)
+                        
+                        -- 对玩家造成伤害
+                        if math.random() < 0.3 and player.components.health then
+                            player.components.health:DoDelta(-5)
+                            if player.components.talker then
+                                player.components.talker:Say("我好像吸引了雷电！")
+                            end
+                        end
+                    end
+                end
+            end)
+            
+            return function()
+                if lightning_task then
+                    lightning_task:Cancel()
+                    DebugLog(3, "清理雷电吸引效果")
+                end
+            end
+        end
+    },
+    {
+        id = "DEBUFF_024",
         name = "食物变质",
         description = "你的背包中的食物会加速腐烂，新获得的食物也会部分变质！",
         fn = function(player)
@@ -1918,6 +1968,7 @@ local NEW_DEBUFF_LIST = {
         end
     },
     {
+        id = "DEBUFF_025",
         name = "物品闹鬼",
         description = "你的物品会突然移动位置，有时甚至会自己使用！",
         fn = function(player)
@@ -1981,6 +2032,7 @@ local NEW_DEBUFF_LIST = {
         end
     },
     {
+        id = "DEBUFF_026",
         name = "昼夜倒置",
         description = "你的昼夜感知完全倒置，白天变成黑夜，黑夜变成白天！",
         fn = function(player)
@@ -2026,6 +2078,7 @@ local NEW_DEBUFF_LIST = {
         end
     },
     {
+        id = "DEBUFF_027",
         name = "混乱视觉",
         description = "你的视野突然变得扭曲，看东西都变得很难！",
         fn = function(player)
@@ -2055,6 +2108,7 @@ local NEW_DEBUFF_LIST = {
         end
     },
     {
+        id = "DEBUFF_028",
         name = "随机传送病",
         description = "你会随机传送到世界各地，没有任何征兆！",
         fn = function(player)
@@ -2102,7 +2156,7 @@ local NEW_DEBUFF_LIST = {
 }
 
 -- 将新的DEBUFF添加到原有列表
-for _, debuff in ipairs(NEW_DEBUFF_LIST) do
+for _, debuff in ipairs(DEBUFF_LIST) do
     table.insert(DEBUFF_LIST, debuff)
 end
 
@@ -2164,7 +2218,9 @@ local function SafeApplyBuff(player)
                     player.name or "未知", 
                     effect_type,
                     buff.name))
-                TheNet:SystemMessage(buff.description)
+                if buff.description then
+                    TheNet:SystemMessage(buff.description)
+                end
             end
         else
             DebugLog(1, "应用" .. effect_type .. "失败:", buff.name, error_msg)
