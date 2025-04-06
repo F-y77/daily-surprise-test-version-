@@ -12,7 +12,7 @@ description = [[
 ]]
 
 author = "凌(Va6gn)"
-version = "3.0"
+version = "3.0.1"
 
 -- 游戏兼容性                               
 dst_compatible = true

@@ -1,1 +1,13 @@
-13888 index light 
+目前已知BUG
+
+1 13888 index light 
+
+2 9704 count item
+
+3 1774 ATTEMPT TO IDEX FILD LIGHT
+
+
+
+5. 生物朋友 失效
+
+6. 危险感知 报错 6696行 index field vignette a nil value

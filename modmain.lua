@@ -3722,45 +3722,203 @@ local BUFF_LIST = {
         name = "兔人之友",
         description = "你成为了兔人的朋友，可以控制所有兔人！",
         fn = function(player)
-            -- 添加兔人控制效果
-            local bunnyman_task = player:DoPeriodicTask(10, function()
+            -- 添加一个标记，表明玩家是兔人的朋友
+            player:AddTag("bunnyman_friend")
+            
+            -- 存储修改过的兔人列表
+            local modified_bunnymans = {}
+            
+            -- 改变兔人的行为
+            local function ModifyBunnymanBehavior(bunnyman)
+                if not bunnyman or not bunnyman:IsValid() or bunnyman:HasTag("modified_by_buff") then
+                    return
+                end
+                
+                -- 标记这个兔人已被修改
+                bunnyman:AddTag("modified_by_buff")
+                table.insert(modified_bunnymans, bunnyman)
+                
+                -- 覆盖ShouldRunAway函数
+                if bunnyman.components.combat then
+                    bunnyman.original_should_run_away = bunnyman.components.combat.ShouldRunAway
+                    bunnyman.components.combat.ShouldRunAway = function(self)
+                        return false  -- 不会逃跑
+                    end
+                end
+                
+                -- 修改兔人的ShouldAcceptItem逻辑，接受玩家的所有物品
+                if bunnyman.components.trader then
+                    bunnyman.original_should_accept = bunnyman.components.trader.ShouldAcceptItem
+                    bunnyman.components.trader.ShouldAcceptItem = function(self, item, giver)
+                        if giver == player then
+                            return true
+                        end
+                        if bunnyman.original_should_accept then
+                            return bunnyman.original_should_accept(self, item, giver)
+                        end
+                        return false
+                    end
+                end
+                
+                -- 覆盖OnGetItemFromPlayer，增加友好关系
+                if bunnyman.components.trader then
+                    bunnyman.original_on_get_item = bunnyman.components.trader.OnGetItemFromPlayer
+                    bunnyman.components.trader.OnGetItemFromPlayer = function(self, inst, giver, item)
+                        if giver == player then
+                            -- 成为跟随者
+                            if bunnyman.components.follower then
+                                bunnyman.components.follower:StopFollowing()
+                                bunnyman.components.follower:SetLeader(player)
+                            end
+                            
+                            -- 增强属性
+                            if bunnyman.components.health and not bunnyman.health_boosted then
+                                bunnyman.components.health.maxhealth = bunnyman.components.health.maxhealth * 2
+                                bunnyman.components.health:DoDelta(bunnyman.components.health.maxhealth)
+                                bunnyman.health_boosted = true
+                            end
+                            
+                            if bunnyman.components.combat and not bunnyman.combat_boosted then
+                                bunnyman.components.combat.damagemultiplier = 2
+                                bunnyman.combat_boosted = true
+                            end
+                            
+                            -- 显示成功信息
+                            if bunnyman.components.talker then
+                                bunnyman.components.talker:Say("我会保护你！")
+                            end
+                        end
+                        
+                        if bunnyman.original_on_get_item then
+                            bunnyman.original_on_get_item(self, inst, giver, item)
+                        end
+                    end
+                end
+                
+                -- 修改它们的AI逻辑，不攻击玩家，攻击玩家的目标
+                if bunnyman.components.combat then
+                    bunnyman.original_target_fn = bunnyman.components.combat.targetfn
+                    bunnyman.components.combat.targetfn = function(inst)
+                        -- 如果玩家有攻击目标，优先攻击玩家的目标
+                        if player:IsValid() and player.components.combat and player.components.combat.target 
+                           and player.components.combat.target:IsValid() then
+                            return player.components.combat.target
+                        end
+                        
+                        -- 不攻击玩家和其他兔人
+                        if bunnyman.original_target_fn then
+                            local target = bunnyman.original_target_fn(inst)
+                            if target == player or (target and target:HasTag("bunnyman")) then
+                                return nil
+                            end
+                            return target
+                        end
+                        return nil
+                    end
+                end
+            end
+            
+            -- 初始修改所有现有的兔人
+            local x, y, z = player.Transform:GetWorldPosition()
+            local initial_bunnymans = TheSim:FindEntities(x, y, z, 60, {"bunnyman"})
+            for _, bunnyman in pairs(initial_bunnymans) do
+                ModifyBunnymanBehavior(bunnyman)
+            end
+            
+            -- 周期性扫描并修改新的兔人
+            local bunnyman_task = player:DoPeriodicTask(5, function()
                 if player:IsValid() then
                     local x, y, z = player.Transform:GetWorldPosition()
-                    local bunnymans = TheSim:FindEntities(x, y, z, 30, {"bunnyman"}, {"player", "monster"})
+                    local bunnymans = TheSim:FindEntities(x, y, z, 60, {"bunnyman"})
                     
                     for _, bunnyman in pairs(bunnymans) do
-                        -- 让兔人跟随玩家
-                        if bunnyman.components.follower then
-                            bunnyman.components.follower:StartFollowing(player)
-                        end
-                        
-                        -- 让兔人攻击玩家的目标
-                        if bunnyman.components.combat and player.components.combat and player.components.combat.target then
-                            bunnyman.components.combat:SetTarget(player.components.combat.target)
-                        end
-                        
-                        -- 防止兔人攻击玩家
-                        if bunnyman.components.combat then
-                            bunnyman.components.combat:SetTarget(nil)
-                        end
-                        
-                        -- 增强兔人属性
-                        if bunnyman.components.health then
-                            bunnyman.components.health.maxhealth = bunnyman.components.health.maxhealth * 2
-                            bunnyman.components.health:DoDelta(bunnyman.components.health.maxhealth)
-                        end
-                        
-                        if bunnyman.components.combat then
-                            bunnyman.components.combat.damagemultiplier = 2
+                        ModifyBunnymanBehavior(bunnyman)
+                    end
+                    
+                    -- 如果玩家有目标，让附近的兔人也攻击该目标
+                    if player.components.combat and player.components.combat.target and player.components.combat.target:IsValid() then
+                        for _, bunnyman in pairs(modified_bunnymans) do
+                            if bunnyman:IsValid() and bunnyman.components.combat and 
+                               bunnyman:GetDistanceSqToInst(player) < 30*30 then
+                                bunnyman.components.combat:SetTarget(player.components.combat.target)
+                            end
                         end
                     end
                 end
             end)
             
+            -- 添加重写兔人AI的关键方法
+            -- 这是最关键的修复，覆盖了兔人的基础判断逻辑
+            local original_should_attack_fn = BunnymanBrain and BunnymanBrain.ShouldAttack
+            if BunnymanBrain then
+                BunnymanBrain.ShouldAttack = function(self, target)
+                    local inst = self.inst
+                    if target == player or target:HasTag("bunnyman") then
+                        return false
+                    end
+                    if original_should_attack_fn then
+                        return original_should_attack_fn(self, target)
+                    end
+                    return true
+                end
+            end
+            
+            -- 清理函数，恢复所有修改
             return function()
                 if bunnyman_task then
                     bunnyman_task:Cancel()
                 end
+                
+                player:RemoveTag("bunnyman_friend")
+                
+                -- 恢复修改过的兔人
+                for _, bunnyman in pairs(modified_bunnymans) do
+                    if bunnyman:IsValid() then
+                        bunnyman:RemoveTag("modified_by_buff")
+                        
+                        if bunnyman.components.combat then
+                            if bunnyman.original_should_run_away then
+                                bunnyman.components.combat.ShouldRunAway = bunnyman.original_should_run_away
+                                bunnyman.original_should_run_away = nil
+                            end
+                            
+                            if bunnyman.original_target_fn then
+                                bunnyman.components.combat.targetfn = bunnyman.original_target_fn
+                                bunnyman.original_target_fn = nil
+                            end
+                            
+                            bunnyman.components.combat.damagemultiplier = 1
+                            bunnyman.combat_boosted = nil
+                        end
+                        
+                        if bunnyman.components.trader then
+                            if bunnyman.original_should_accept then
+                                bunnyman.components.trader.ShouldAcceptItem = bunnyman.original_should_accept
+                                bunnyman.original_should_accept = nil
+                            end
+                            
+                            if bunnyman.original_on_get_item then
+                                bunnyman.components.trader.OnGetItemFromPlayer = bunnyman.original_on_get_item
+                                bunnyman.original_on_get_item = nil
+                            end
+                        end
+                        
+                        if bunnyman.components.follower and bunnyman.components.follower:GetLeader() == player then
+                            bunnyman.components.follower:StopFollowing()
+                        end
+                        
+                        if bunnyman.components.health then
+                            bunnyman.components.health.maxhealth = bunnyman.components.health.maxhealth / 2
+                            bunnyman.health_boosted = nil
+                        end
+                    end
+                end
+                
+                -- 恢复全局的兔人AI逻辑
+                if BunnymanBrain and original_should_attack_fn then
+                    BunnymanBrain.ShouldAttack = original_should_attack_fn
+                end
+                
                 DebugLog(3, "清理兔人之友效果")
             end
         end
